@@ -1,0 +1,4364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracker Pro-centia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --hover-bg: #f1f5f9;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --zoom-level: 1;
+            --slot-height: 40px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Login Page */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        .login-card p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-success {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+        }
+
+        .app-header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .app-header h1 {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-badge {
+            background: var(--hover-bg);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .main-content {
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Week Navigation */
+        .week-nav {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .week-nav h2 {
+            font-size: 18px;
+        }
+
+        .week-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .zoom-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .zoom-btn {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .zoom-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .zoom-level-display {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 45px;
+            text-align: center;
+        }
+        
+        .time-header {
+            position: relative;
+        }
+
+        /* Timesheet Grid */
+        .timesheet-container {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .timesheet-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(5, 1fr);
+            overflow-x: auto;
+        }
+
+        .time-header, .day-header {
+            background: var(--hover-bg);
+            padding: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 2px solid var(--border-color);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .day-summary {
+            background: var(--card-bg);
+            padding: 8px 12px;
+            font-size: 13px;
+            border-bottom: 2px solid var(--border-color);
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .day-summary .hours {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .email-day-btn {
+            padding: 6px 10px;
+            font-size: 18px;
+            background: var(--hover-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .email-day-btn:hover {
+            background: var(--border-color);
+            transform: scale(1.1);
+        }
+
+        .time-label {
+            padding: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            background: var(--hover-bg);
+        }
+
+        .time-slot {
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            min-height: calc(var(--slot-height) * var(--zoom-level));
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+            user-select: none;
+        }
+
+        .time-slot:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .time-slot.selecting {
+            background: rgba(37, 99, 235, 0.15);
+        }
+
+        .time-entry {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: move;
+            position: absolute;
+            overflow: visible;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s;
+            z-index: 1;
+        }
+
+        .time-entry[draggable="false"] {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .time-entry:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        .time-entry.dragging {
+            opacity: 0.5;
+            z-index: 100;
+        }
+
+        .resize-handle {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 8px;
+            cursor: ns-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .resize-handle:hover {
+            opacity: 1;
+        }
+
+        .resize-handle::before {
+            content: '';
+            width: 30px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
+        }
+
+        .resize-handle.top {
+            top: -4px;
+        }
+
+        .resize-handle.bottom {
+            bottom: -4px;
+        }
+
+        .time-entry:hover .resize-handle {
+            opacity: 0.7;
+        }
+
+        .time-slot.drag-over {
+            background: rgba(37, 99, 235, 0.3) !important;
+            border: 2px solid var(--primary-color) !important;
+            box-shadow: inset 0 0 10px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Allow drag events to pass through entry content to the slot */
+        .entry-client, .entry-description {
+            pointer-events: none;
+        }
+
+        /* Remove old activity-based colors since we're using client colors now */
+        input[type="color"] {
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        .entry-client {
+            font-weight: 600;
+            margin-bottom: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entry-hours {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .entry-description {
+            font-size: 11px;
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .favorite-ticket {
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .favorite-ticket:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        .favorite-ticket.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .favorite-ticket-number {
+            font-weight: 700;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .favorite-ticket-client {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .favorite-star {
+            color: var(--warning-color);
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 4px;
+        }
+
+        .favorite-star:hover {
+            transform: scale(1.2);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .close-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Admin Panel */
+        .admin-section {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .admin-section h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .list-group {
+            list-style: none;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Reports */
+        .report-filters {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .report-table {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--hover-bg);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: var(--hover-bg);
+        }
+
+        /* Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--primary-color);
+            display: none;
+            z-index: 2000;
+            max-width: 400px;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-header {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .toast-body {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Settings */
+        .settings-group {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-group h3 {
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .timesheet-grid {
+                font-size: 12px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .app-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: var(--shadow-lg);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .autocomplete-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 16px;
+            border-radius: 6px;
+            background: var(--hover-bg);
+        }
+
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-card">
+            <h1>Time Tracker Pro-centia</h1>
+            <p>Please sign in to continue</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+            <p style="margin-top: 16px; font-size: 13px; color: var(--text-secondary);">
+                Demo users: admin/admin, manager/manager, user/user
+            </p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <header class="app-header">
+            <h1>Time Tracker Pro-centia</h1>
+            <div class="user-info">
+                <span class="user-badge" id="userBadge"></span>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchTab('timesheet')">Timesheet</button>
+                <button class="nav-tab hidden" onclick="switchTab('reports')" id="reportsTabBtn">Reports</button>
+                <button class="nav-tab hidden" onclick="switchTab('admin')" id="adminTabBtn">Admin</button>
+                <button class="nav-tab" onclick="switchTab('settings')">Settings</button>
+            </div>
+
+            <!-- Timesheet Tab -->
+            <div class="tab-content active" id="timesheetTab">
+                <div class="week-nav">
+                    <div>
+                        <h2 id="weekRange"></h2>
+                        <div id="timesheetUserFilter" style="margin-top: 12px; display: none;">
+                            <label style="font-size: 14px; margin-right: 8px;">View entries for:</label>
+                            <select id="timesheetUserSelect" onchange="renderTimesheet()" style="padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 6px;">
+                                <option value="all">All Users</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="week-controls">
+                        <button class="btn btn-secondary btn-sm" onclick="previousWeek()">← Previous</button>
+                        <button class="btn btn-secondary btn-sm" onclick="currentWeek()">Today</button>
+                        <button class="btn btn-secondary btn-sm" onclick="nextWeek()">Next →</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <div class="timesheet-container" style="flex: 1;">
+                        <div class="timesheet-grid" id="timesheetGrid"></div>
+                    </div>
+                    <div id="favoriteTicketsPanel" style="width: 250px; background: var(--card-bg); border-radius: 8px; padding: 16px; box-shadow: var(--shadow);">
+                        <h3 style="font-size: 16px; margin-bottom: 12px;">Favorite Tickets</h3>
+                        <div id="favoriteTicketsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="reportsTab">
+                <div class="admin-section">
+                    <h3>System Reports</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">Generate comprehensive reports on time entries, user activity, and project metrics.</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">User Activity Report</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Hours logged by each user across all clients</p>
+                            <button class="btn btn-primary btn-sm" onclick="generateAdminReport('user-activity')">Generate Report</button>
+                        </div>
+                        
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">Client Summary Report</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Total hours and entries per client</p>
+                            <button class="btn btn-primary btn-sm" onclick="generateAdminReport('client-summary')">Generate Report</button>
+                        </div>
+                        
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">Weekly Breakdown</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Hours per day for current week</p>
+                            <button class="btn btn-primary btn-sm" onclick="generateAdminReport('weekly-breakdown')">Generate Report</button>
+                        </div>
+                        
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">Activity Distribution</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Hours spent on each activity type</p>
+                            <button class="btn btn-primary btn-sm" onclick="generateAdminReport('activity-distribution')">Generate Report</button>
+                        </div>
+                        
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">Ticket Usage Report</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Most used tickets and their hours</p>
+                            <button class="btn btn-primary btn-sm" onclick="generateAdminReport('ticket-usage')">Generate Report</button>
+                        </div>
+                        
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">Complete Data Export</h4>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">All time entries with full details</p>
+                            <button class="btn btn-primary btn-sm" onclick="generateAdminReport('full-export')">Export All Data</button>
+                        </div>
+                        
+                        <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;" id="customReportCard">
+                            <h4 style="margin-bottom: 12px; font-size: 16px;">Custom Date Range</h4>
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <label style="font-size: 12px;">Start Date</label>
+                                <input type="date" id="customReportStartDate" style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label style="font-size: 12px;">End Date</label>
+                                <input type="date" id="customReportEndDate" style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px;">
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="generateCustomReport()">Generate Custom Report</button>
+                        </div>
+                    </div>
+                    
+                    <div id="adminReportOutput" style="display: none; margin-top: 20px;">
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                <h4 id="adminReportTitle" style="font-size: 18px;">Report</h4>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-secondary btn-sm" onclick="exportAdminReport()">Export CSV</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="closeAdminReport()">Close</button>
+                                </div>
+                            </div>
+                            <div id="adminReportContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div class="tab-content" id="adminTab">
+                <div class="admin-section">
+                    <h3>Users</h3>
+                    <button class="btn btn-primary btn-sm" style="margin-bottom: 16px;" onclick="showAddUserModal()">Add User</button>
+                    <ul class="list-group" id="userList"></ul>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Clients</h3>
+                    <button class="btn btn-primary btn-sm" style="margin-bottom: 16px;" onclick="showAddClientModal()">Add Client</button>
+                    <ul class="list-group" id="clientList"></ul>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Activities</h3>
+                    <button class="btn btn-primary btn-sm" style="margin-bottom: 16px;" onclick="showAddActivityModal()">Add Activity</button>
+                    <ul class="list-group" id="activityList"></ul>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Job Tickets</h3>
+                    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                        <button class="btn btn-primary btn-sm" onclick="showImportTicketsModal()">Import Tickets (CSV)</button>
+                        <button class="btn btn-secondary btn-sm" onclick="downloadTicketTemplate()">Download CSV Template</button>
+                    </div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                        Total tickets in system: <strong id="ticketCount">0</strong>
+                    </p>
+                    
+                    <!-- Client Tabs -->
+                    <div class="nav-tabs" style="margin-bottom: 16px; border-bottom: 2px solid var(--border-color);">
+                        <button class="nav-tab active" onclick="switchTicketTab('all')">All Clients</button>
+                        <div id="clientTicketTabs"></div>
+                    </div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px;">
+                        <table style="width: 100%; font-size: 14px;">
+                            <thead style="position: sticky; top: 0; background: var(--card-bg);">
+                                <tr>
+                                    <th style="text-align: left; padding: 8px;">Ticket #</th>
+                                    <th style="text-align: left; padding: 8px;">Description</th>
+                                    <th style="text-align: left; padding: 8px;">Client</th>
+                                    <th style="text-align: right; padding: 8px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticketList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settingsTab">
+                <div class="settings-group">
+                    <h3>Notification Settings</h3>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableReminders" checked>
+                            <label for="enableReminders">Enable daily timesheet reminders</label>
+                        </div>
+                        <small style="color: var(--text-secondary); font-size: 12px; display: block; margin-top: 4px;">
+                            Browser notifications will appear even when this tab is inactive
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>Reminder Time</label>
+                        <input type="time" id="reminderTime" value="17:00">
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableNagMode">
+                            <label for="enableNagMode">Enable nag mode (repeat reminders)</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nag Interval (minutes)</label>
+                        <input type="number" id="nagInterval" value="15" min="5" max="60" step="5">
+                        <small style="color: var(--text-secondary); font-size: 12px;">Repeat reminder every X minutes after reminder time if day has less than 7.5 hours logged</small>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Change Password</h3>
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="currentPassword">
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="confirmPassword">
+                    </div>
+                    <button class="btn btn-primary" onclick="changePassword()">Change Password</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Entry Modal -->
+    <div class="modal" id="entryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Time Entry</h2>
+                <button class="close-btn" onclick="closeEntryModal()">×</button>
+            </div>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label>Client *</label>
+                    <select id="entryClient" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Activity *</label>
+                    <select id="entryActivity" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Job Ticket</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="entryTicket" placeholder="Start typing..." autocomplete="off" style="flex: 1;">
+                        <button type="button" class="favorite-star" id="favoriteToggle" onclick="toggleEntryFavorite()" title="Add to favorites" style="font-size: 24px; background: none; border: none; padding: 4px;">☆</button>
+                    </div>
+                    <div class="autocomplete-list hidden" id="ticketAutocomplete"></div>
+                </div>
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea id="entryDescription" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Duration (hours)</label>
+                    <input type="number" id="entryDuration" step="0.25" min="0.25" placeholder="e.g., 2.5">
+                    <small style="color: var(--text-secondary); font-size: 12px;">Optional: Enter hours to auto-fill time slots</small>
+                </div>
+                <input type="hidden" id="entryId">
+                <input type="hidden" id="entryDate">
+                <input type="hidden" id="entryStartTime">
+                <input type="hidden" id="entryEndTime">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEntryModal()">Cancel</button>
+                    <button type="button" class="btn btn-danger hidden" id="deleteEntryBtn" onclick="deleteEntry()">Delete</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary hidden" id="copyEntryBtn" onclick="copyEntry()">Copy Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add User</h2>
+                <button class="close-btn" onclick="closeAddUserModal()">×</button>
+            </div>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" id="newUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="newUserFullName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="newUserEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="newUserRole" required>
+                        <option value="user">User</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" id="newUserPassword" required>
+                </div>
+                <div class="form-group" id="managerTeamGroup" style="display: none;">
+                    <label>Team Members (for Manager)</label>
+                    <select id="managerTeam" multiple style="height: 120px;"></select>
+                    <small style="color: var(--text-secondary); font-size: 12px;">Hold Ctrl/Cmd to select multiple</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Client Modal -->
+    <div class="modal" id="addClientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Client</h2>
+                <button class="close-btn" onclick="closeAddClientModal()">×</button>
+            </div>
+            <form id="addClientForm">
+                <div class="form-group">
+                    <label>Client Name *</label>
+                    <input type="text" id="newClientName" required>
+                </div>
+                <div class="form-group">
+                    <label>Client Color *</label>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <input type="color" id="newClientColor" value="#667eea" required style="width: 60px; height: 40px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;">
+                        <span id="colorPreview" style="padding: 8px 16px; border-radius: 4px; color: white; font-weight: 500; background: #667eea;">Preview</span>
+                    </div>
+                    <small style="color: var(--text-secondary); font-size: 12px;">This color will be used for all time entries logged to this client</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddClientModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Activity Modal -->
+    <div class="modal" id="addActivityModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Activity</h2>
+                <button class="close-btn" onclick="closeAddActivityModal()">×</button>
+            </div>
+            <form id="addActivityForm">
+                <div class="form-group">
+                    <label>Activity Name *</label>
+                    <input type="text" id="newActivityName" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddActivityModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Tickets Modal -->
+    <div class="modal" id="importTicketsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Import Job Tickets</h2>
+                <button class="close-btn" onclick="closeImportTicketsModal()">×</button>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label>Upload CSV File *</label>
+                    <input type="file" id="ticketFile" accept=".csv" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%;">
+                    <small style="color: var(--text-secondary); font-size: 12px;">
+                        CSV format: Ticket Number, Description, Client Name (optional)
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Preview:</label>
+                    <div id="ticketPreview" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; background: var(--hover-bg); font-family: monospace; font-size: 12px;">
+                        Upload a CSV file to see preview...
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeImportTicketsModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="processTicketImport()" id="importTicketsBtn" disabled>Import Tickets</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-header" id="toastHeader"></div>
+        <div class="toast-body" id="toastBody"></div>
+    </div>
+
+    <script>
+// Time Tracker Pro-centia - Main Application Logic
+
+// ==================== DATA STORAGE LAYER ====================
+// This section provides hooks for future database integration
+// Currently uses localStorage as a flat-file substitute
+
+class DataStore {
+    constructor() {
+        this.storageKey = 'timetracker_data';
+        this.initializeData();
+    }
+
+    // Initialize default data structure
+    initializeData() {
+        if (!localStorage.getItem(this.storageKey)) {
+            const defaultData = {
+                users: [
+                    { id: 1, username: 'admin', password: 'admin', fullName: 'Admin User', email: 'admin@company.com', role: 'admin' },
+                    { id: 2, username: 'manager', password: 'manager', fullName: 'Manager User', email: 'manager@company.com', role: 'manager', team: [3] },
+                    { id: 3, username: 'user', password: 'user', fullName: 'Regular User', email: 'user@company.com', role: 'user' }
+                ],
+                clients: [
+                    { id: 1, name: 'Acme Corp', color: '#667eea' },
+                    { id: 2, name: 'TechStart Inc', color: '#43e97b' },
+                    { id: 3, name: 'Global Solutions', color: '#f093fb' }
+                ],
+                activities: [
+                    { id: 1, name: 'Meeting' },
+                    { id: 2, name: 'Admin' },
+                    { id: 3, name: 'Development' },
+                    { id: 4, name: 'Holiday' },
+                    { id: 5, name: 'Other' }
+                ],
+                entries: [
+                    // Demo entries for the current week
+                    {
+                        id: 1001,
+                        userId: 3,
+                        date: this.getCurrentMonday(),
+                        startTime: '09:00',
+                        endTime: '11:00',
+                        clientId: 1,
+                        activityId: 3,
+                        ticket: 'PROJ-101',
+                        description: 'Implement new feature for dashboard',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 1002,
+                        userId: 3,
+                        date: this.getCurrentMonday(),
+                        startTime: '13:00',
+                        endTime: '15:30',
+                        clientId: 2,
+                        activityId: 1,
+                        ticket: 'PROJ-102',
+                        description: 'Client meeting - requirements gathering',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 1003,
+                        userId: 2,
+                        date: this.getTuesday(),
+                        startTime: '10:00',
+                        endTime: '12:00',
+                        clientId: 1,
+                        activityId: 3,
+                        ticket: 'PROJ-103',
+                        description: 'Code review and testing',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 1004,
+                        userId: 2,
+                        date: this.getTuesday(),
+                        startTime: '14:00',
+                        endTime: '16:00',
+                        clientId: 3,
+                        activityId: 2,
+                        ticket: '',
+                        description: 'Administrative tasks and email',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 1005,
+                        userId: 1,
+                        date: this.getWednesday(),
+                        startTime: '09:00',
+                        endTime: '10:30',
+                        clientId: 2,
+                        activityId: 1,
+                        ticket: 'PROJ-104',
+                        description: 'Project kickoff meeting',
+                        createdAt: new Date().toISOString()
+                    }
+                ],
+                tickets: [
+                    { number: 'PROJ-101', description: 'Implement new feature for dashboard', clientId: 1, lastUsed: new Date().toISOString() },
+                    { number: 'PROJ-102', description: 'Client meeting - requirements gathering', clientId: 2, lastUsed: new Date().toISOString() },
+                    { number: 'PROJ-103', description: 'Code review and testing', clientId: 1, lastUsed: new Date().toISOString() },
+                    { number: 'PROJ-104', description: 'Project kickoff meeting', clientId: 2, lastUsed: new Date().toISOString() }
+                ],
+                settings: {
+                    enableReminders: true,
+                    reminderTime: '17:00'
+                }
+            };
+            this.saveData(defaultData);
+        }
+    }
+
+    // Helper to get current Monday
+    getCurrentMonday() {
+        const today = new Date();
+        const day = today.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + diff);
+        return monday.toISOString().split('T')[0];
+    }
+
+    // Helper to get Tuesday
+    getTuesday() {
+        const monday = new Date(this.getCurrentMonday());
+        monday.setDate(monday.getDate() + 1);
+        return monday.toISOString().split('T')[0];
+    }
+
+    // Helper to get Wednesday
+    getWednesday() {
+        const monday = new Date(this.getCurrentMonday());
+        monday.setDate(monday.getDate() + 2);
+        return monday.toISOString().split('T')[0];
+    }
+
+    // DATABASE HOOK: Replace with API call to fetch all data
+    getData() {
+        const data = localStorage.getItem(this.storageKey);
+        return data ? JSON.parse(data) : null;
+    }
+
+    // DATABASE HOOK: Replace with API call to save data
+    saveData(data) {
+        localStorage.setItem(this.storageKey, JSON.stringify(data));
+    }
+
+    // DATABASE HOOK: Get entries (replace with SELECT query)
+    getEntries(filters = {}) {
+        const data = this.getData();
+        let entries = data.entries;
+
+        if (filters.userId) {
+            entries = entries.filter(e => e.userId === filters.userId);
+        }
+        if (filters.startDate && filters.endDate) {
+            entries = entries.filter(e => e.date >= filters.startDate && e.date <= filters.endDate);
+        }
+        if (filters.client) {
+            entries = entries.filter(e => e.clientId === filters.client);
+        }
+
+        return entries;
+    }
+
+    // DATABASE HOOK: Add entry (replace with INSERT query)
+    addEntry(entry) {
+        const data = this.getData();
+        entry.id = Date.now();
+        entry.createdAt = new Date().toISOString();
+        data.entries.push(entry);
+        
+        // Auto-add ticket if new
+        if (entry.ticket && !data.tickets.find(t => t.number === entry.ticket)) {
+            data.tickets.push({
+                number: entry.ticket,
+                description: entry.description,
+                clientId: entry.clientId,
+                lastUsed: new Date().toISOString()
+            });
+        }
+        
+        this.saveData(data);
+        return entry;
+    }
+
+    // DATABASE HOOK: Update entry (replace with UPDATE query)
+    updateEntry(entryId, updates) {
+        const data = this.getData();
+        const index = data.entries.findIndex(e => e.id === entryId);
+        if (index !== -1) {
+            data.entries[index] = { ...data.entries[index], ...updates, updatedAt: new Date().toISOString() };
+            this.saveData(data);
+            return data.entries[index];
+        }
+        return null;
+    }
+
+    // DATABASE HOOK: Delete entry (replace with DELETE query)
+    deleteEntry(entryId) {
+        const data = this.getData();
+        data.entries = data.entries.filter(e => e.id !== entryId);
+        this.saveData(data);
+    }
+
+    // DATABASE HOOK: Get users (replace with SELECT query)
+    getUsers() {
+        return this.getData().users;
+    }
+
+    // DATABASE HOOK: Add user (replace with INSERT query)
+    addUser(user) {
+        const data = this.getData();
+        user.id = Math.max(...data.users.map(u => u.id), 0) + 1;
+        data.users.push(user);
+        this.saveData(data);
+        return user;
+    }
+
+    // DATABASE HOOK: Update user (replace with UPDATE query)
+    updateUser(userId, updates) {
+        const data = this.getData();
+        const index = data.users.findIndex(u => u.id === userId);
+        if (index !== -1) {
+            data.users[index] = { ...data.users[index], ...updates };
+            this.saveData(data);
+            return data.users[index];
+        }
+        return null;
+    }
+
+    // DATABASE HOOK: Delete user (replace with DELETE query)
+    deleteUser(userId) {
+        const data = this.getData();
+        data.users = data.users.filter(u => u.id !== userId);
+        this.saveData(data);
+    }
+
+    // DATABASE HOOK: Get clients (replace with SELECT query)
+    getClients() {
+        return this.getData().clients;
+    }
+
+    // DATABASE HOOK: Add client (replace with INSERT query)
+    addClient(client) {
+        const data = this.getData();
+        client.id = Math.max(...data.clients.map(c => c.id), 0) + 1;
+        data.clients.push(client);
+        this.saveData(data);
+        return client;
+    }
+
+    // DATABASE HOOK: Delete client (replace with DELETE query)
+    deleteClient(clientId) {
+        const data = this.getData();
+        data.clients = data.clients.filter(c => c.id !== clientId);
+        this.saveData(data);
+    }
+
+    // DATABASE HOOK: Get activities (replace with SELECT query)
+    getActivities() {
+        return this.getData().activities;
+    }
+
+    // DATABASE HOOK: Add activity (replace with INSERT query)
+    addActivity(activity) {
+        const data = this.getData();
+        activity.id = Math.max(...data.activities.map(a => a.id), 0) + 1;
+        data.activities.push(activity);
+        this.saveData(data);
+        return activity;
+    }
+
+    // DATABASE HOOK: Delete activity (replace with DELETE query)
+    deleteActivity(activityId) {
+        const data = this.getData();
+        data.activities = data.activities.filter(a => a.id !== activityId);
+        this.saveData(data);
+    }
+
+    // DATABASE HOOK: Get tickets (replace with SELECT query)
+    getTickets(search = '') {
+        const data = this.getData();
+        if (search) {
+            return data.tickets.filter(t => 
+                t.number.toLowerCase().includes(search.toLowerCase())
+            ).sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed));
+        }
+        return data.tickets.sort((a, b) => new Date(b.lastUsed) - new Date(a.lastUsed));
+    }
+
+    // Get settings
+    getSettings() {
+        return this.getData().settings;
+    }
+
+    // Save settings
+    saveSettings(settings) {
+        const data = this.getData();
+        data.settings = { ...data.settings, ...settings };
+        this.saveData(data);
+    }
+}
+
+// ==================== APPLICATION STATE ====================
+
+const store = new DataStore();
+let currentUser = null;
+let currentWeekStart = null;
+let selectedSlots = [];
+let isSelecting = false;
+
+// ==================== AUTHENTICATION ====================
+
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    const users = store.getUsers();
+    const user = users.find(u => u.username === username && u.password === password);
+
+    if (user) {
+        currentUser = user;
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        showApp();
+    } else {
+        showToast('Login Failed', 'Invalid username or password', 'danger');
+    }
+});
+
+function logout() {
+    currentUser = null;
+    sessionStorage.removeItem('currentUser');
+    
+    // Hide all role-specific tabs
+    document.getElementById('reportsTabBtn').classList.add('hidden');
+    document.getElementById('adminTabBtn').classList.add('hidden');
+    document.getElementById('timesheetUserFilter').style.display = 'none';
+    
+    // Reset to timesheet tab
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelector('.nav-tab').classList.add('active');
+    document.getElementById('timesheetTab').classList.add('active');
+    
+    // Show login screen
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+}
+
+function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    
+    // Set user badge
+    document.getElementById('userBadge').textContent = `${currentUser.fullName} (${currentUser.role})`;
+    
+    // Show/hide tabs based on role
+    // User: Timesheet, Settings
+    // Manager: Timesheet, Reports, Settings
+    // Admin: Timesheet, Reports, Admin, Settings
+    
+    if (currentUser.role === 'admin') {
+        document.getElementById('reportsTabBtn').classList.remove('hidden');
+        document.getElementById('adminTabBtn').classList.remove('hidden');
+        // Show user filter for timesheet
+        setupTimesheetUserFilter();
+    } else if (currentUser.role === 'manager') {
+        document.getElementById('reportsTabBtn').classList.remove('hidden');
+        document.getElementById('adminTabBtn').classList.add('hidden');
+        // Show user filter for timesheet
+        setupTimesheetUserFilter();
+    } else {
+        // Regular user - hide both Reports and Admin
+        document.getElementById('reportsTabBtn').classList.add('hidden');
+        document.getElementById('adminTabBtn').classList.add('hidden');
+    }
+    
+    // Initialize
+    currentWeek();
+    loadSettings();
+    setupReminders();
+}
+
+function setupTimesheetUserFilter() {
+    const filterDiv = document.getElementById('timesheetUserFilter');
+    const select = document.getElementById('timesheetUserSelect');
+    
+    filterDiv.style.display = 'block';
+    select.innerHTML = '<option value="all">All Users</option>';
+    
+    const users = store.getUsers();
+    
+    if (currentUser.role === 'admin') {
+        // Admin sees all users
+        users.forEach(user => {
+            select.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
+        });
+    } else if (currentUser.role === 'manager') {
+        // Manager sees self and team
+        select.innerHTML += `<option value="${currentUser.id}">${currentUser.fullName} (Me)</option>`;
+        const teamIds = currentUser.team || [];
+        teamIds.forEach(userId => {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                select.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
+            }
+        });
+    }
+}
+
+// ==================== TAB NAVIGATION ====================
+
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    
+    // Load tab-specific data
+    if (tabName === 'admin') {
+        loadAdminData();
+    } else if (tabName === 'reports') {
+        initializeCustomReportDates();
+    } else if (tabName === 'timesheet') {
+        renderTimesheet();
+    }
+}
+
+function initializeCustomReportDates() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    const customStartDate = document.getElementById('customReportStartDate');
+    const customEndDate = document.getElementById('customReportEndDate');
+    
+    if (customStartDate && !customStartDate.value) {
+        customStartDate.value = formatDateISO(firstDay);
+    }
+    if (customEndDate && !customEndDate.value) {
+        customEndDate.value = formatDateISO(lastDay);
+    }
+}
+
+// ==================== TIMESHEET GRID ====================
+
+function getWeekDates(startDate) {
+    const dates = [];
+    const current = new Date(startDate);
+    for (let i = 0; i < 5; i++) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+    }
+    return dates;
+}
+
+function formatDate(date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
+}
+
+function formatDateISO(date) {
+    return date.toISOString().split('T')[0];
+}
+
+function renderTimesheet() {
+    const grid = document.getElementById('timesheetGrid');
+    grid.innerHTML = '';
+    
+    const weekDates = getWeekDates(currentWeekStart);
+    const timeSlots = [];
+    
+    // Generate time slots (8am to 7pm, 15-minute intervals)
+    for (let hour = 8; hour <= 18; hour++) {
+        for (let min = 0; min < 60; min += 15) {
+            if (hour === 18 && min > 0) break; // Stop at 7pm
+            timeSlots.push({ hour, min });
+        }
+    }
+    
+    // Header row
+    grid.appendChild(createHeader('Time'));
+    weekDates.forEach(date => {
+        grid.appendChild(createHeader(formatDate(date)));
+    });
+    
+    // Summary row
+    grid.appendChild(createSummaryCell(''));
+    weekDates.forEach(date => {
+        grid.appendChild(createSummaryCell(date));
+    });
+    
+    // Time rows
+    timeSlots.forEach((slot, index) => {
+        const timeStr = `${slot.hour.toString().padStart(2, '0')}:${slot.min.toString().padStart(2, '0')}`;
+        
+        // Time label (only show on the hour)
+        if (slot.min === 0) {
+            const label = document.createElement('div');
+            label.className = 'time-label';
+            label.textContent = timeStr;
+            grid.appendChild(label);
+        } else {
+            const label = document.createElement('div');
+            label.className = 'time-label';
+            label.textContent = '';
+            grid.appendChild(label);
+        }
+        
+        // Day slots
+        weekDates.forEach(date => {
+            const cell = createTimeSlot(date, timeStr, index);
+            grid.appendChild(cell);
+        });
+    });
+    
+    // Load and render entries
+    renderEntries(weekDates);
+    
+    // Render favorite tickets panel
+    renderFavoriteTickets();
+}
+
+function createHeader(text) {
+    const header = document.createElement('div');
+    header.className = text === 'Time' ? 'time-header' : 'day-header';
+    header.textContent = text;
+    return header;
+}
+
+function createSummaryCell(date) {
+    const cell = document.createElement('div');
+    cell.className = 'day-summary';
+    
+    if (!date) {
+        // This is the corner cell - put zoom controls here
+        cell.innerHTML = `
+            <div class="zoom-controls" style="position: static; transform: none; display: flex; flex-direction: row; gap: 4px; justify-content: center; align-items: center;">
+                <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                <span class="zoom-level-display" style="min-width: 40px;">Zoom</span>
+                <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+            </div>
+        `;
+        return cell;
+    }
+    
+    const hours = calculateDayHours(date);
+    cell.innerHTML = `
+        <div class="hours">${hours.toFixed(2)}h</div>
+        <button class="email-day-btn" onclick="generateDayEmail('${formatDateISO(date)}')" title="Email this day">📧</button>
+    `;
+    
+    return cell;
+}
+
+function calculateDayHours(date) {
+    const dateStr = formatDateISO(date);
+    let entries = store.getEntries({ startDate: dateStr, endDate: dateStr });
+    
+    // Filter by current view
+    const userSelect = document.getElementById('timesheetUserSelect');
+    const filterValue = userSelect ? userSelect.value : null;
+    
+    if (filterValue && filterValue !== 'all') {
+        entries = entries.filter(e => e.userId === parseInt(filterValue));
+    } else if (currentUser.role === 'user') {
+        entries = entries.filter(e => e.userId === currentUser.id);
+    } else if (currentUser.role === 'manager' && (!filterValue || filterValue === 'all')) {
+        const teamIds = currentUser.team || [];
+        entries = entries.filter(e => e.userId === currentUser.id || teamIds.includes(e.userId));
+    }
+    
+    if (entries.length === 0) return 0;
+    
+    // Calculate total hours treating overlaps as same block
+    const timeBlocks = [];
+    
+    entries.forEach(entry => {
+        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [endHour, endMin] = entry.endTime.split(':').map(Number);
+        const startMins = startHour * 60 + startMin;
+        const endMins = endHour * 60 + endMin;
+        
+        timeBlocks.push({ start: startMins, end: endMins });
+    });
+    
+    // Merge overlapping blocks
+    timeBlocks.sort((a, b) => a.start - b.start);
+    const merged = [];
+    
+    timeBlocks.forEach(block => {
+        if (merged.length === 0) {
+            merged.push(block);
+        } else {
+            const last = merged[merged.length - 1];
+            if (block.start <= last.end) {
+                // Overlapping or adjacent - merge
+                last.end = Math.max(last.end, block.end);
+            } else {
+                // Non-overlapping - add new block
+                merged.push(block);
+            }
+        }
+    });
+    
+    // Calculate total minutes from merged blocks
+    const totalMins = merged.reduce((sum, block) => sum + (block.end - block.start), 0);
+    return totalMins / 60;
+}
+
+function createTimeSlot(date, time, slotIndex) {
+    const slot = document.createElement('div');
+    slot.className = 'time-slot';
+    slot.dataset.date = formatDateISO(date);
+    slot.dataset.time = time;
+    slot.dataset.slotIndex = slotIndex;
+    
+    // Check if entry can be edited (within current month + 3 days)
+    const canEdit = canEditEntry(date);
+    
+    if (canEdit) {
+        slot.addEventListener('mousedown', startSelection);
+        slot.addEventListener('mouseenter', continueSelection);
+        slot.addEventListener('mouseup', endSelection);
+        
+        // Add drag and drop listeners
+        slot.addEventListener('dragover', handleDragOver);
+        slot.addEventListener('dragleave', handleDragLeave);
+        slot.addEventListener('drop', (e) => {
+            if (draggedFavoriteTicket) {
+                handleFavoriteTicketDrop(e, slot.dataset.date, slot.dataset.time);
+            } else {
+                handleDrop(e);
+            }
+        });
+    } else {
+        slot.style.cursor = 'not-allowed';
+        slot.style.opacity = '0.6';
+    }
+    
+    return slot;
+}
+
+function canEditEntry(date) {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Get the 3rd day of next month
+    const lockDate = new Date(currentYear, currentMonth + 1, 3);
+    
+    const entryDate = new Date(date);
+    const entryMonth = entryDate.getMonth();
+    const entryYear = entryDate.getFullYear();
+    
+    // If entry is in current month or within 3 days of next month
+    if (entryYear === currentYear && entryMonth === currentMonth) {
+        return true;
+    }
+    
+    // If entry is within first 3 days of next month
+    if (entryDate <= lockDate && entryDate.getDate() <= 3) {
+        return true;
+    }
+    
+    // If entry is in the future
+    if (entryDate > today) {
+        return true;
+    }
+    
+    return false;
+}
+
+function renderEntries(weekDates) {
+    const startDate = formatDateISO(weekDates[0]);
+    const endDate = formatDateISO(weekDates[weekDates.length - 1]);
+    
+    let entries = store.getEntries({ startDate, endDate });
+    
+    // Apply timesheet user filter if visible
+    const userSelect = document.getElementById('timesheetUserSelect');
+    const filterValue = userSelect ? userSelect.value : null;
+    
+    if (filterValue && filterValue !== 'all') {
+        // Filter to specific user
+        entries = entries.filter(e => e.userId === parseInt(filterValue));
+    } else {
+        // Filter by user role
+        if (currentUser.role === 'user') {
+            entries = entries.filter(e => e.userId === currentUser.id);
+        } else if (currentUser.role === 'manager' && (!filterValue || filterValue === 'all')) {
+            // Manager sees their own entries and their team's entries when "All Users" selected
+            const teamIds = currentUser.team || [];
+            entries = entries.filter(e => e.userId === currentUser.id || teamIds.includes(e.userId));
+        }
+        // Admin sees all entries when "All Users" selected
+    }
+    
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    
+    // Group entries by date to handle overlaps
+    const entriesByDate = {};
+    weekDates.forEach(date => {
+        const dateStr = formatDateISO(date);
+        entriesByDate[dateStr] = [];
+    });
+    
+    entries.forEach(entry => {
+        if (entriesByDate[entry.date]) {
+            entriesByDate[entry.date].push(entry);
+        }
+    });
+    
+    // Render entries for each date
+    Object.keys(entriesByDate).forEach(date => {
+        const dayEntries = entriesByDate[date];
+        if (dayEntries.length === 0) return;
+        
+        // Sort by start time
+        dayEntries.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        
+        // Calculate overlap groups
+        const overlapGroups = [];
+        dayEntries.forEach(entry => {
+            // Find which group this entry belongs to (based on time overlap)
+            let addedToGroup = false;
+            for (let group of overlapGroups) {
+                // Check if this entry overlaps with any entry in the group
+                const overlaps = group.some(e => {
+                    return (entry.startTime < e.endTime && entry.endTime > e.startTime);
+                });
+                if (overlaps) {
+                    group.push(entry);
+                    addedToGroup = true;
+                    break;
+                }
+            }
+            if (!addedToGroup) {
+                overlapGroups.push([entry]);
+            }
+        });
+        
+        // Render each overlap group
+        overlapGroups.forEach(group => {
+            const groupSize = group.length;
+            group.forEach((entry, index) => {
+                const client = clients.find(c => c.id === entry.clientId);
+                const activity = activities.find(a => a.id === entry.activityId);
+                
+                if (!client || !activity) return;
+                
+                const slots = document.querySelectorAll(`[data-date="${entry.date}"]`);
+                const startSlots = Array.from(slots).filter(s => s.dataset.time >= entry.startTime && s.dataset.time < entry.endTime);
+                
+                if (startSlots.length > 0) {
+                    const firstSlot = startSlots[0];
+                    const lastSlot = startSlots[startSlots.length - 1];
+                    
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = `time-entry`;
+                    entryDiv.dataset.entryId = entry.id;
+                    entryDiv.draggable = canEditEntry(new Date(entry.date)) && entry.userId === currentUser.id;
+                    
+                    // Use client color instead of activity color
+                    if (client.color) {
+                        entryDiv.style.background = client.color;
+                    }
+                    
+                    // Calculate duration
+                    const [startHour, startMin] = entry.startTime.split(':').map(Number);
+                    const [endHour, endMin] = entry.endTime.split(':').map(Number);
+                    const durationHours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+                    
+                    // Calculate height by measuring actual slot heights
+                    const firstSlotRect = firstSlot.getBoundingClientRect();
+                    const lastSlotRect = lastSlot.getBoundingClientRect();
+                    const totalHeight = (lastSlotRect.bottom - firstSlotRect.top);
+                    
+                    entryDiv.style.height = `${totalHeight - 4}px`;
+                    entryDiv.style.top = '2px';
+                    
+                    // Position side-by-side for overlapping entries
+                    const widthPercent = 100 / groupSize;
+                    const leftPercent = widthPercent * index;
+                    entryDiv.style.left = `${leftPercent}%`;
+                    entryDiv.style.width = `${widthPercent}%`;
+                    
+                    // Add username if viewing multiple users
+                    const users = store.getUsers();
+                    const entryUser = users.find(u => u.id === entry.userId);
+                    const showUsername = filterValue === 'all' && currentUser.role !== 'user';
+                    
+                    entryDiv.innerHTML = `
+                        <div class="entry-client">
+                            <span>${client.name}${showUsername && entryUser ? ' - ' + entryUser.fullName : ''}</span>
+                            <span class="entry-hours">${durationHours.toFixed(2)}h</span>
+                        </div>
+                        <div class="entry-description">${entry.ticket ? entry.ticket + ': ' : ''}${entry.description}</div>
+                    `;
+                    
+                    // Add resize handles if user can edit
+                    if (entry.userId === currentUser.id && canEditEntry(new Date(entry.date))) {
+                        const topHandle = document.createElement('div');
+                        topHandle.className = 'resize-handle top';
+                        topHandle.addEventListener('mousedown', (e) => startResize(e, entry.id, 'top'));
+                        entryDiv.appendChild(topHandle);
+                        
+                        const bottomHandle = document.createElement('div');
+                        bottomHandle.className = 'resize-handle bottom';
+                        bottomHandle.addEventListener('mousedown', (e) => startResize(e, entry.id, 'bottom'));
+                        entryDiv.appendChild(bottomHandle);
+                    }
+                    
+                    // Add click handler for editing (only own entries)
+                    if (entry.userId === currentUser.id) {
+                        entryDiv.addEventListener('click', (e) => {
+                            if (!isDragging && !isResizing) {
+                                e.stopPropagation();
+                                editEntry(entry.id);
+                            }
+                        });
+                        
+                        // Add drag handlers
+                        if (entryDiv.draggable) {
+                            entryDiv.addEventListener('dragstart', handleDragStart);
+                            entryDiv.addEventListener('dragend', handleDragEnd);
+                        }
+                    } else {
+                        // Make it clear this is someone else's entry
+                        entryDiv.style.cursor = 'default';
+                        entryDiv.style.opacity = '0.85';
+                    }
+                    
+                    firstSlot.appendChild(entryDiv);
+                }
+            });
+        });
+    });
+}
+
+// ==================== RESIZE FUNCTIONALITY ====================
+
+let isResizing = false;
+let resizeEntryId = null;
+let resizeDirection = null;
+let resizeStartY = 0;
+let resizeOriginalEntry = null;
+
+function startResize(e, entryId, direction) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    isResizing = true;
+    resizeEntryId = entryId;
+    resizeDirection = direction;
+    resizeStartY = e.clientY;
+    resizeOriginalEntry = store.getEntries().find(entry => entry.id === entryId);
+    
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', endResize);
+    
+    // Prevent text selection during resize
+    document.body.style.userSelect = 'none';
+}
+
+function handleResize(e) {
+    if (!isResizing || !resizeOriginalEntry) return;
+    
+    const slotHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slot-height')) || 40;
+    const zoomLevel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom-level')) || 1;
+    const actualSlotHeight = slotHeight * zoomLevel;
+    
+    const deltaY = e.clientY - resizeStartY;
+    const slots = Math.round(deltaY / actualSlotHeight);
+    
+    if (slots === 0) return;
+    
+    const [startHour, startMin] = resizeOriginalEntry.startTime.split(':').map(Number);
+    const [endHour, endMin] = resizeOriginalEntry.endTime.split(':').map(Number);
+    
+    let newStartTime = resizeOriginalEntry.startTime;
+    let newEndTime = resizeOriginalEntry.endTime;
+    
+    if (resizeDirection === 'top') {
+        // Adjust start time
+        const newStartMins = startHour * 60 + startMin + (slots * 15);
+        const newStartH = Math.floor(newStartMins / 60);
+        const newStartM = newStartMins % 60;
+        newStartTime = `${newStartH.toString().padStart(2, '0')}:${newStartM.toString().padStart(2, '0')}`;
+        
+        // Don't allow start to go past end
+        if (newStartMins >= endHour * 60 + endMin) return;
+    } else {
+        // Adjust end time
+        const newEndMins = endHour * 60 + endMin + (slots * 15);
+        const newEndH = Math.floor(newEndMins / 60);
+        const newEndM = newEndMins % 60;
+        newEndTime = `${newEndH.toString().padStart(2, '0')}:${newEndM.toString().padStart(2, '0')}`;
+        
+        // Don't allow end to go before start
+        if (newEndMins <= startHour * 60 + startMin) return;
+    }
+    
+    // Update the entry
+    store.updateEntry(resizeEntryId, {
+        startTime: newStartTime,
+        endTime: newEndTime
+    });
+    
+    // Re-render
+    renderTimesheet();
+    
+    // Reset for next calculation
+    resizeStartY = e.clientY;
+    resizeOriginalEntry = store.getEntries().find(entry => entry.id === resizeEntryId);
+}
+
+function endResize(e) {
+    if (!isResizing) return;
+    
+    isResizing = false;
+    resizeEntryId = null;
+    resizeDirection = null;
+    resizeOriginalEntry = null;
+    
+    document.removeEventListener('mousemove', handleResize);
+    document.removeEventListener('mouseup', endResize);
+    
+    document.body.style.userSelect = '';
+    
+    showToast('Success', 'Entry resized');
+}
+
+// ==================== FAVORITE TICKET DRAG AND DROP ====================
+
+let draggedFavoriteTicket = null;
+
+function handleFavoriteTicketDragStart(e) {
+    draggedFavoriteTicket = {
+        ticketNumber: e.target.dataset.ticketNumber,
+        ticketDesc: e.target.dataset.ticketDesc,
+        clientId: e.target.dataset.clientId ? parseInt(e.target.dataset.clientId) : null
+    };
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'copy';
+}
+
+function handleFavoriteTicketDragEnd(e) {
+    e.target.classList.remove('dragging');
+    setTimeout(() => {
+        draggedFavoriteTicket = null;
+    }, 100);
+}
+
+function handleFavoriteTicketDrop(e, date, time) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedFavoriteTicket) return;
+    
+    // Check if date can be edited
+    if (!canEditEntry(new Date(date))) {
+        showToast('Cannot Add', 'Cannot add entry to a locked date', 'warning');
+        return;
+    }
+    
+    // Show modal to get duration
+    showFavoriteTicketDurationModal(draggedFavoriteTicket, date, time);
+}
+
+function showFavoriteTicketDurationModal(ticketData, date, startTime) {
+    const duration = prompt(`How many hours for ${ticketData.ticketNumber}?`, '1.0');
+    
+    if (duration === null) return; // Cancelled
+    
+    const hours = parseFloat(duration);
+    if (isNaN(hours) || hours <= 0 || hours > 11) {
+        showToast('Invalid Duration', 'Please enter a valid duration between 0 and 11 hours', 'danger');
+        return;
+    }
+    
+    // Calculate end time
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const totalMins = startHour * 60 + startMin + (hours * 60);
+    const endHour = Math.floor(totalMins / 60);
+    const endMin = totalMins % 60;
+    const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+    
+    // Validate end time
+    if (endHour > 19 || (endHour === 19 && endMin > 0)) {
+        showToast('Invalid Time', 'Entry would extend past 7pm', 'warning');
+        return;
+    }
+    
+    // Determine client and activity
+    let clientId = ticketData.clientId;
+    let activityId = null;
+    
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    
+    // If no client assigned to ticket, use first client
+    if (!clientId && clients.length > 0) {
+        clientId = clients[0].id;
+    }
+    
+    // Use first activity (or Development if it exists)
+    if (activities.length > 0) {
+        const devActivity = activities.find(a => a.name.toLowerCase() === 'development');
+        activityId = devActivity ? devActivity.id : activities[0].id;
+    }
+    
+    // Create entry
+    const newEntry = {
+        userId: currentUser.id,
+        date: date,
+        startTime: startTime,
+        endTime: endTime,
+        clientId: clientId,
+        activityId: activityId,
+        ticket: ticketData.ticketNumber,
+        description: ticketData.ticketDesc || 'Enter description',
+        createdAt: new Date().toISOString()
+    };
+    
+    store.addEntry(newEntry);
+    renderTimesheet();
+    showToast('Success', `${ticketData.ticketNumber} added - ${hours}h`);
+}
+
+// ==================== IMPROVED DRAG AND DROP ====================
+
+let draggedEntry = null;
+let draggedEntryData = null;
+let isDragging = false;
+let dragOverSlot = null;
+
+function handleDragStart(e) {
+    isDragging = true;
+    draggedEntry = e.target;
+    draggedEntryData = store.getEntries().find(entry => entry.id === parseInt(e.target.dataset.entryId));
+    
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.innerHTML);
+    
+    // Make all time slots more visible for dropping
+    document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.style.outline = '1px dashed rgba(37, 99, 235, 0.2)';
+    });
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    
+    // Remove all drag-over classes and outlines
+    document.querySelectorAll('.drag-over').forEach(slot => {
+        slot.classList.remove('drag-over');
+    });
+    
+    document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.style.outline = '';
+    });
+    
+    dragOverSlot = null;
+    
+    // Reset dragging state after a short delay to prevent click event
+    setTimeout(() => {
+        isDragging = false;
+        draggedEntry = null;
+        draggedEntryData = null;
+    }, 100);
+}
+
+function handleDragOver(e) {
+    // Allow both entry drags and favorite ticket drags
+    if (!draggedEntry && !draggedFavoriteTicket) return;
+    
+    e.preventDefault();
+    e.dataTransfer.dropEffect = draggedFavoriteTicket ? 'copy' : 'move';
+    
+    // CRITICAL: Hide ALL time entries to find the slot underneath
+    const allEntries = document.querySelectorAll('.time-entry');
+    allEntries.forEach(entry => {
+        entry.style.display = 'none';
+        entry.style.pointerEvents = 'none';
+    });
+    
+    // Get the actual element at the mouse position
+    const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+    
+    // Restore ALL entries
+    allEntries.forEach(entry => {
+        entry.style.display = '';
+        entry.style.pointerEvents = '';
+    });
+    
+    // Remove previous drag-over highlighting
+    if (dragOverSlot) {
+        dragOverSlot.classList.remove('drag-over');
+    }
+    
+    // Find the time slot from the element at point
+    let timeSlot = null;
+    
+    if (elementAtPoint) {
+        if (elementAtPoint.classList.contains('time-slot')) {
+            timeSlot = elementAtPoint;
+        } else {
+            timeSlot = elementAtPoint.closest('.time-slot');
+        }
+    }
+    
+    // Highlight the found slot
+    if (timeSlot) {
+        dragOverSlot = timeSlot;
+        timeSlot.classList.add('drag-over');
+    } else {
+        dragOverSlot = null;
+    }
+}
+
+function handleDragLeave(e) {
+    // Simplified - just let dragOver handle all highlighting
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedEntry || !draggedEntryData) return;
+    
+    // CRITICAL: Hide ALL time entries to find the slot underneath
+    const allEntries = document.querySelectorAll('.time-entry');
+    allEntries.forEach(entry => {
+        entry.style.display = 'none';
+        entry.style.pointerEvents = 'none';
+    });
+    
+    // Get the actual element at the mouse position
+    const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+    
+    // Restore ALL entries
+    allEntries.forEach(entry => {
+        entry.style.display = '';
+        entry.style.pointerEvents = '';
+    });
+    
+    // Find the time slot
+    let targetSlot = null;
+    
+    if (elementAtPoint) {
+        if (elementAtPoint.classList.contains('time-slot')) {
+            targetSlot = elementAtPoint;
+        } else {
+            targetSlot = elementAtPoint.closest('.time-slot');
+        }
+    }
+    
+    if (!targetSlot) {
+        showToast('Error', 'Cannot find valid drop location', 'danger');
+        return;
+    }
+    
+    const newDate = targetSlot.dataset.date;
+    const newStartTime = targetSlot.dataset.time;
+    
+    console.log('Dropping at:', newDate, newStartTime); // Debug
+    
+    // Check if target date can be edited
+    if (!canEditEntry(new Date(newDate))) {
+        showToast('Cannot Move', 'Cannot move entry to a locked date', 'warning');
+        return;
+    }
+    
+    // Calculate duration of original entry
+    const [oldStartHour, oldStartMin] = draggedEntryData.startTime.split(':').map(Number);
+    const [oldEndHour, oldEndMin] = draggedEntryData.endTime.split(':').map(Number);
+    const durationMinutes = (oldEndHour * 60 + oldEndMin) - (oldStartHour * 60 + oldStartMin);
+    
+    // Calculate new end time
+    const [newStartHour, newStartMin] = newStartTime.split(':').map(Number);
+    const totalMins = newStartHour * 60 + newStartMin + durationMinutes;
+    const newEndHour = Math.floor(totalMins / 60);
+    const newEndMin = totalMins % 60;
+    const newEndTime = `${newEndHour.toString().padStart(2, '0')}:${newEndMin.toString().padStart(2, '0')}`;
+    
+    console.log('New time range:', newStartTime, '->', newEndTime); // Debug
+    
+    // Validate end time is within working hours (before 19:00)
+    if (newEndHour > 19 || (newEndHour === 19 && newEndMin > 0)) {
+        showToast('Cannot Move', 'Entry would extend past 7pm', 'warning');
+        return;
+    }
+    
+    // Validate start time is within working hours (after 08:00)
+    if (newStartHour < 8) {
+        showToast('Cannot Move', 'Entry would start before 8am', 'warning');
+        return;
+    }
+    
+    // Update the entry - this will work even if overlapping with other entries
+    store.updateEntry(draggedEntryData.id, {
+        date: newDate,
+        startTime: newStartTime,
+        endTime: newEndTime
+    });
+    
+    // Re-render timesheet
+    renderTimesheet();
+    
+    showToast('Success', `Entry moved to ${newStartTime}`);
+}
+
+
+// ==================== TIME SELECTION ====================
+
+function startSelection(e) {
+    // Don't start selection if clicking on an entry
+    if (e.target.closest('.time-entry')) return;
+    
+    if (!canEditEntry(new Date(e.target.dataset.date))) return;
+    
+    isSelecting = true;
+    selectedSlots = [e.target];
+    e.target.classList.add('selecting');
+}
+
+function continueSelection(e) {
+    if (!isSelecting) return;
+    
+    const firstSlot = selectedSlots[0];
+    if (e.target.dataset.date === firstSlot.dataset.date) {
+        // Clear previous selection
+        selectedSlots.forEach(s => s.classList.remove('selecting'));
+        
+        // Get all slots between first and current
+        const firstIndex = parseInt(firstSlot.dataset.slotIndex);
+        const currentIndex = parseInt(e.target.dataset.slotIndex);
+        const minIndex = Math.min(firstIndex, currentIndex);
+        const maxIndex = Math.max(firstIndex, currentIndex);
+        
+        selectedSlots = Array.from(document.querySelectorAll(`[data-date="${firstSlot.dataset.date}"]`))
+            .filter(s => {
+                const idx = parseInt(s.dataset.slotIndex);
+                return idx >= minIndex && idx <= maxIndex;
+            });
+        
+        selectedSlots.forEach(s => s.classList.add('selecting'));
+    }
+}
+
+function endSelection(e) {
+    if (!isSelecting || selectedSlots.length === 0) return;
+    
+    isSelecting = false;
+    
+    const date = selectedSlots[0].dataset.date;
+    const startTime = selectedSlots[0].dataset.time;
+    const endSlot = selectedSlots[selectedSlots.length - 1];
+    
+    // Calculate end time (add 15 minutes to last slot)
+    const [hours, mins] = endSlot.dataset.time.split(':').map(Number);
+    let endHours = hours;
+    let endMins = mins + 15;
+    if (endMins >= 60) {
+        endHours++;
+        endMins = 0;
+    }
+    const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+    
+    // Clear selection visual
+    selectedSlots.forEach(s => s.classList.remove('selecting'));
+    selectedSlots = [];
+    
+    // Open entry modal
+    showEntryModal(date, startTime, endTime);
+}
+
+// Prevent text selection during drag
+document.addEventListener('selectstart', (e) => {
+    if (isSelecting) {
+        e.preventDefault();
+    }
+});
+
+// ==================== ENTRY MODAL ====================
+
+function showEntryModal(date, startTime, endTime, entryId = null) {
+    const modal = document.getElementById('entryModal');
+    const form = document.getElementById('entryForm');
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    
+    // Populate dropdowns
+    const clientSelect = document.getElementById('entryClient');
+    clientSelect.innerHTML = '<option value="">Select a client</option>';
+    clients.forEach(client => {
+        clientSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+    });
+    
+    const activitySelect = document.getElementById('entryActivity');
+    activitySelect.innerHTML = '<option value="">Select an activity</option>';
+    activities.forEach(activity => {
+        activitySelect.innerHTML += `<option value="${activity.id}">${activity.name}</option>`;
+    });
+    
+    // If editing existing entry
+    if (entryId) {
+        const entry = store.getEntries().find(e => e.id === entryId);
+        if (entry) {
+            document.getElementById('modalTitle').textContent = 'Edit Time Entry';
+            document.getElementById('entryClient').value = entry.clientId;
+            document.getElementById('entryActivity').value = entry.activityId;
+            document.getElementById('entryTicket').value = entry.ticket || '';
+            document.getElementById('entryDescription').value = entry.description;
+            document.getElementById('entryId').value = entry.id;
+            document.getElementById('entryDate').value = entry.date;
+            document.getElementById('entryStartTime').value = entry.startTime;
+            document.getElementById('entryEndTime').value = entry.endTime;
+            document.getElementById('deleteEntryBtn').classList.remove('hidden');
+            document.getElementById('copyEntryBtn').classList.remove('hidden');
+        }
+    } else {
+        document.getElementById('modalTitle').textContent = 'Add Time Entry';
+        form.reset();
+        document.getElementById('entryDate').value = date;
+        document.getElementById('entryStartTime').value = startTime;
+        document.getElementById('entryEndTime').value = endTime;
+        document.getElementById('entryId').value = '';
+        document.getElementById('deleteEntryBtn').classList.add('hidden');
+        document.getElementById('copyEntryBtn').classList.add('hidden');
+    }
+    
+    // Update favorite star
+    setTimeout(updateFavoriteStar, 100);
+    
+    modal.classList.add('active');
+}
+
+function closeEntryModal() {
+    document.getElementById('entryModal').classList.remove('active');
+    document.getElementById('ticketAutocomplete').classList.add('hidden');
+}
+
+function updateFavoriteStar() {
+    const ticketNumber = document.getElementById('entryTicket').value.trim();
+    const favoriteBtn = document.getElementById('favoriteToggle');
+    
+    if (!favoriteBtn) return; // Element not loaded yet
+    
+    if (!ticketNumber) {
+        favoriteBtn.textContent = '☆';
+        favoriteBtn.title = 'Enter a ticket number first';
+        favoriteBtn.style.opacity = '0.3';
+        return;
+    }
+    
+    const data = store.getData();
+    let ticket = data.tickets.find(t => t.number === ticketNumber);
+    
+    if (ticket && ticket.favorite) {
+        favoriteBtn.textContent = '★';
+        favoriteBtn.title = 'Remove from favorites';
+        favoriteBtn.style.opacity = '1';
+    } else {
+        favoriteBtn.textContent = '☆';
+        favoriteBtn.title = 'Add to favorites';
+        favoriteBtn.style.opacity = '1';
+    }
+}
+
+function toggleEntryFavorite() {
+    const ticketNumber = document.getElementById('entryTicket').value.trim();
+    
+    if (!ticketNumber) {
+        showToast('Error', 'Please enter a ticket number first', 'danger');
+        return;
+    }
+    
+    const data = store.getData();
+    let ticket = data.tickets.find(t => t.number === ticketNumber);
+    
+    // Get current entry data for client
+    const clientId = parseInt(document.getElementById('entryClient').value);
+    const description = document.getElementById('entryDescription').value;
+    
+    if (!ticket) {
+        // Create new ticket entry
+        ticket = {
+            number: ticketNumber,
+            description: description,
+            clientId: clientId,
+            favorite: true,
+            lastUsed: new Date().toISOString()
+        };
+        data.tickets.push(ticket);
+    } else {
+        // Toggle existing ticket
+        ticket.favorite = !ticket.favorite;
+    }
+    
+    store.saveData(data);
+    updateFavoriteStar();
+    renderFavoriteTickets();
+    
+    showToast('Success', ticket.favorite ? 'Added to favorites' : 'Removed from favorites');
+}
+
+// Update favorite star when ticket field changes
+document.addEventListener('DOMContentLoaded', () => {
+    const ticketInput = document.getElementById('entryTicket');
+    if (ticketInput) {
+        ticketInput.addEventListener('input', updateFavoriteStar);
+    }
+});
+
+function editEntry(entryId) {
+    const entry = store.getEntries().find(e => e.id === entryId);
+    if (!entry) return;
+    
+    // Check if entry can be edited
+    if (!canEditEntry(new Date(entry.date))) {
+        showToast('Entry Locked', 'This entry is from a previous month and cannot be edited.', 'warning');
+        return;
+    }
+    
+    showEntryModal(entry.date, entry.startTime, entry.endTime, entryId);
+}
+
+function deleteEntry() {
+    const entryId = parseInt(document.getElementById('entryId').value);
+    if (!entryId) return;
+    
+    if (confirm('Are you sure you want to delete this entry?')) {
+        store.deleteEntry(entryId);
+        closeEntryModal();
+        renderTimesheet();
+        showToast('Success', 'Entry deleted successfully');
+    }
+}
+
+function copyEntry() {
+    const entryId = parseInt(document.getElementById('entryId').value);
+    if (!entryId) return;
+    
+    const entry = store.getEntries().find(e => e.id === entryId);
+    if (!entry) return;
+    
+    // Create a duplicate entry in the same time slot
+    const newEntry = {
+        userId: currentUser.id,
+        date: entry.date,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        clientId: entry.clientId,
+        activityId: entry.activityId,
+        ticket: entry.ticket,
+        description: entry.description,
+        createdAt: new Date().toISOString()
+    };
+    
+    store.addEntry(newEntry);
+    renderTimesheet();
+    showToast('Success', 'Entry duplicated in same slot - drag to move it');
+    closeEntryModal();
+}
+
+// Handle entry form submission
+document.getElementById('entryForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const entryId = document.getElementById('entryId').value;
+    const date = document.getElementById('entryDate').value;
+    const startTime = document.getElementById('entryStartTime').value;
+    let endTime = document.getElementById('entryEndTime').value;
+    const duration = parseFloat(document.getElementById('entryDuration').value);
+    
+    // If duration is specified, calculate end time
+    if (duration && duration > 0) {
+        const [hours, mins] = startTime.split(':').map(Number);
+        const totalMins = hours * 60 + mins + (duration * 60);
+        const newHours = Math.floor(totalMins / 60);
+        const newMins = totalMins % 60;
+        endTime = `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
+    }
+    
+    const entryData = {
+        userId: currentUser.id,
+        date,
+        startTime,
+        endTime,
+        clientId: parseInt(document.getElementById('entryClient').value),
+        activityId: parseInt(document.getElementById('entryActivity').value),
+        ticket: document.getElementById('entryTicket').value.trim(),
+        description: document.getElementById('entryDescription').value.trim()
+    };
+    
+    if (entryId) {
+        store.updateEntry(parseInt(entryId), entryData);
+        showToast('Success', 'Entry updated successfully');
+    } else {
+        store.addEntry(entryData);
+        showToast('Success', 'Entry added successfully');
+    }
+    
+    closeEntryModal();
+    renderTimesheet();
+});
+
+// Ticket autocomplete
+document.getElementById('entryTicket').addEventListener('input', (e) => {
+    const search = e.target.value.trim();
+    const autocompleteDiv = document.getElementById('ticketAutocomplete');
+    
+    if (search.length < 1) {
+        autocompleteDiv.classList.add('hidden');
+        return;
+    }
+    
+    const tickets = store.getTickets(search);
+    
+    if (tickets.length === 0) {
+        autocompleteDiv.classList.add('hidden');
+        return;
+    }
+    
+    autocompleteDiv.innerHTML = '';
+    tickets.slice(0, 5).forEach(ticket => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.textContent = `${ticket.number} - ${ticket.description}`;
+        item.addEventListener('click', () => {
+            document.getElementById('entryTicket').value = ticket.number;
+            document.getElementById('entryDescription').value = ticket.description;
+            autocompleteDiv.classList.add('hidden');
+        });
+        autocompleteDiv.appendChild(item);
+    });
+    
+    autocompleteDiv.classList.remove('hidden');
+});
+
+// ==================== ZOOM CONTROLS ====================
+
+let currentZoomLevel = 1;
+
+function zoomIn() {
+    if (currentZoomLevel < 2) {
+        currentZoomLevel += 0.25;
+        applyZoom();
+    }
+}
+
+function zoomOut() {
+    if (currentZoomLevel > 0.5) {
+        currentZoomLevel -= 0.25;
+        applyZoom();
+    }
+}
+
+function applyZoom() {
+    document.documentElement.style.setProperty('--zoom-level', currentZoomLevel);
+    
+    // Re-render timesheet to update entry heights
+    renderTimesheet();
+}
+
+// ==================== WEEK NAVIGATION ====================
+
+function currentWeek() {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // Adjust to Monday
+    currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() + diff);
+    updateWeekDisplay();
+}
+
+function previousWeek() {
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    updateWeekDisplay();
+}
+
+function nextWeek() {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    updateWeekDisplay();
+}
+
+function updateWeekDisplay() {
+    const weekEnd = new Date(currentWeekStart);
+    weekEnd.setDate(weekEnd.getDate() + 4);
+    
+    document.getElementById('weekRange').textContent = 
+        `${formatDate(currentWeekStart)} - ${formatDate(weekEnd)}`;
+    
+    renderTimesheet();
+}
+
+// ==================== ADMIN PANEL ====================
+
+function loadAdminData() {
+    loadUserList();
+    loadClientList();
+    loadActivityList();
+    loadTicketList();
+}
+
+function loadUserList() {
+    const users = store.getUsers();
+    const list = document.getElementById('userList');
+    list.innerHTML = '';
+    
+    users.forEach(user => {
+        const item = document.createElement('li');
+        item.className = 'list-item';
+        item.innerHTML = `
+            <div>
+                <strong>${user.fullName}</strong> (${user.username})
+                <br><small style="color: var(--text-secondary);">${user.email} - ${user.role}</small>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})" ${user.id === currentUser.id ? 'disabled' : ''}>Delete</button>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function loadClientList() {
+    const clients = store.getClients();
+    const list = document.getElementById('clientList');
+    list.innerHTML = '';
+    
+    clients.forEach(client => {
+        const item = document.createElement('li');
+        item.className = 'list-item';
+        item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 30px; height: 30px; border-radius: 4px; background: ${client.color || '#667eea'};"></div>
+                <strong>${client.name}</strong>
+            </div>
+            <div class="list-item-actions">
+                <button class="btn btn-danger btn-sm" onclick="deleteClient(${client.id})">Delete</button>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+// Color preview update
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.getElementById('newClientColor');
+    if (colorInput) {
+        colorInput.addEventListener('input', (e) => {
+            const preview = document.getElementById('colorPreview');
+            if (preview) {
+                preview.style.background = e.target.value;
+            }
+        });
+    }
+});
+
+function loadActivityList() {
+    const activities = store.getActivities();
+    const list = document.getElementById('activityList');
+    list.innerHTML = '';
+    
+    // Sort alphabetically
+    activities.sort((a, b) => a.name.localeCompare(b.name));
+    
+    activities.forEach(activity => {
+        const item = document.createElement('li');
+        item.className = 'list-item';
+        item.innerHTML = `
+            <div><strong>${activity.name}</strong></div>
+            <div class="list-item-actions">
+                <button class="btn btn-danger btn-sm" onclick="deleteActivity(${activity.id})">Delete</button>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+// User Management
+function showAddUserModal() {
+    const users = store.getUsers().filter(u => u.role === 'user');
+    const teamSelect = document.getElementById('managerTeam');
+    teamSelect.innerHTML = '';
+    users.forEach(user => {
+        teamSelect.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
+    });
+    document.getElementById('addUserModal').classList.add('active');
+}
+
+function closeAddUserModal() {
+    document.getElementById('addUserModal').classList.remove('active');
+    document.getElementById('addUserForm').reset();
+}
+
+document.getElementById('newUserRole').addEventListener('change', (e) => {
+    const teamGroup = document.getElementById('managerTeamGroup');
+    teamGroup.style.display = e.target.value === 'manager' ? 'block' : 'none';
+});
+
+document.getElementById('addUserForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const userData = {
+        username: document.getElementById('newUsername').value.trim(),
+        fullName: document.getElementById('newUserFullName').value.trim(),
+        email: document.getElementById('newUserEmail').value.trim(),
+        role: document.getElementById('newUserRole').value,
+        password: document.getElementById('newUserPassword').value
+    };
+    
+    if (userData.role === 'manager') {
+        const teamSelect = document.getElementById('managerTeam');
+        userData.team = Array.from(teamSelect.selectedOptions).map(opt => parseInt(opt.value));
+    }
+    
+    store.addUser(userData);
+    closeAddUserModal();
+    loadUserList();
+    showToast('Success', 'User added successfully');
+});
+
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        store.deleteUser(userId);
+        loadUserList();
+        showToast('Success', 'User deleted successfully');
+    }
+}
+
+// Client Management
+function showAddClientModal() {
+    document.getElementById('addClientModal').classList.add('active');
+}
+
+function closeAddClientModal() {
+    document.getElementById('addClientModal').classList.remove('active');
+    document.getElementById('addClientForm').reset();
+}
+
+document.getElementById('addClientForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const clientData = {
+        name: document.getElementById('newClientName').value.trim(),
+        color: document.getElementById('newClientColor').value
+    };
+    
+    store.addClient(clientData);
+    closeAddClientModal();
+    loadClientList();
+    showToast('Success', 'Client added successfully');
+});
+
+function deleteClient(clientId) {
+    if (confirm('Are you sure you want to delete this client?')) {
+        store.deleteClient(clientId);
+        loadClientList();
+        showToast('Success', 'Client deleted successfully');
+    }
+}
+
+// Activity Management
+function showAddActivityModal() {
+    document.getElementById('addActivityModal').classList.add('active');
+}
+
+function closeAddActivityModal() {
+    document.getElementById('addActivityModal').classList.remove('active');
+    document.getElementById('addActivityForm').reset();
+}
+
+document.getElementById('addActivityForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const activityData = {
+        name: document.getElementById('newActivityName').value.trim()
+    };
+    
+    store.addActivity(activityData);
+    closeAddActivityModal();
+    loadActivityList();
+    showToast('Success', 'Activity added successfully');
+});
+
+function deleteActivity(activityId) {
+    if (confirm('Are you sure you want to delete this activity?')) {
+        store.deleteActivity(activityId);
+        loadActivityList();
+        showToast('Success', 'Activity deleted successfully');
+    }
+}
+
+// ==================== TICKET MANAGEMENT ====================
+
+let currentTicketClientFilter = 'all';
+
+function loadTicketList() {
+    const tickets = store.getTickets();
+    const clients = store.getClients();
+    const list = document.getElementById('ticketList');
+    const count = document.getElementById('ticketCount');
+    
+    count.textContent = tickets.length;
+    
+    // Load client tabs
+    const tabsContainer = document.getElementById('clientTicketTabs');
+    if (tabsContainer) {
+        tabsContainer.innerHTML = '';
+        // Sort clients alphabetically
+        const sortedClients = [...clients].sort((a, b) => a.name.localeCompare(b.name));
+        sortedClients.forEach(client => {
+            const tab = document.createElement('button');
+            tab.className = 'nav-tab';
+            tab.textContent = client.name;
+            tab.onclick = () => switchTicketTab(client.id);
+            tabsContainer.appendChild(tab);
+        });
+    }
+    
+    // Filter tickets by selected client
+    let filteredTickets = tickets;
+    if (currentTicketClientFilter !== 'all') {
+        filteredTickets = tickets.filter(t => t.clientId === currentTicketClientFilter);
+    }
+    
+    // Sort by ticket number (alphanumeric sort)
+    filteredTickets.sort((a, b) => {
+        // Extract numbers if present for natural sorting
+        const aMatch = a.number.match(/(\d+)/);
+        const bMatch = b.number.match(/(\d+)/);
+        
+        if (aMatch && bMatch) {
+            const aNum = parseInt(aMatch[1]);
+            const bNum = parseInt(bMatch[1]);
+            if (aNum !== bNum) return aNum - bNum;
+        }
+        
+        return a.number.localeCompare(b.number);
+    });
+    
+    list.innerHTML = '';
+    
+    if (filteredTickets.length === 0) {
+        const message = currentTicketClientFilter === 'all' 
+            ? 'No tickets imported yet' 
+            : 'No tickets for this client';
+        list.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">${message}</td></tr>`;
+        return;
+    }
+    
+    filteredTickets.forEach(ticket => {
+        const client = clients.find(c => c.id === ticket.clientId);
+        const isFavorite = ticket.favorite || false;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="padding: 8px;">
+                <strong>${ticket.number}</strong>
+                <span class="favorite-star" onclick="toggleFavoriteTicket('${ticket.number}')" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">${isFavorite ? '★' : '☆'}</span>
+            </td>
+            <td style="padding: 8px;">${ticket.description || 'No description'}</td>
+            <td style="padding: 8px;">${client ? client.name : 'N/A'}</td>
+            <td style="padding: 8px; text-align: right;">
+                <button class="btn btn-danger btn-sm" onclick="deleteTicket('${ticket.number}')" style="padding: 4px 8px; font-size: 12px;">Delete</button>
+            </td>
+        `;
+        list.appendChild(row);
+    });
+}
+
+function toggleFavoriteTicket(ticketNumber) {
+    const data = store.getData();
+    const ticket = data.tickets.find(t => t.number === ticketNumber);
+    if (ticket) {
+        ticket.favorite = !ticket.favorite;
+        store.saveData(data);
+        loadTicketList();
+        renderFavoriteTickets();
+        showToast('Success', ticket.favorite ? 'Added to favorites' : 'Removed from favorites');
+    }
+}
+
+function renderFavoriteTickets() {
+    const data = store.getData();
+    const favoriteTickets = data.tickets.filter(t => t.favorite);
+    const clients = store.getClients();
+    const container = document.getElementById('favoriteTicketsList');
+    
+    if (!container) return;
+    
+    if (favoriteTickets.length === 0) {
+        container.innerHTML = '<p style="font-size: 13px; color: var(--text-secondary); text-align: center;">No favorite tickets yet. Star tickets in the Admin panel to add them here.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    favoriteTickets.forEach(ticket => {
+        const client = clients.find(c => c.id === ticket.clientId);
+        const div = document.createElement('div');
+        div.className = 'favorite-ticket';
+        div.draggable = true;
+        div.dataset.ticketNumber = ticket.number;
+        div.dataset.ticketDesc = ticket.description || '';
+        div.dataset.clientId = ticket.clientId || '';
+        
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div class="favorite-ticket-number">${ticket.number}</div>
+                    <div class="favorite-ticket-client">${client ? client.name : 'No client'}</div>
+                </div>
+                <button class="favorite-star" onclick="unfavoriteTicket('${ticket.number}')" title="Remove from favorites" style="background: none; border: none; font-size: 16px; padding: 0; cursor: pointer;">★</button>
+            </div>
+        `;
+        
+        div.addEventListener('dragstart', handleFavoriteTicketDragStart);
+        div.addEventListener('dragend', handleFavoriteTicketDragEnd);
+        
+        container.appendChild(div);
+    });
+}
+
+function unfavoriteTicket(ticketNumber) {
+    const data = store.getData();
+    const ticket = data.tickets.find(t => t.number === ticketNumber);
+    if (ticket) {
+        ticket.favorite = false;
+        store.saveData(data);
+        renderFavoriteTickets();
+        loadTicketList(); // Refresh admin list if visible
+        showToast('Success', 'Removed from favorites');
+    }
+}
+
+function switchTicketTab(clientId) {
+    currentTicketClientFilter = clientId;
+    
+    // Update active tab
+    const allTabs = document.querySelectorAll('#clientTicketTabs .nav-tab, .admin-section .nav-tabs > .nav-tab');
+    allTabs.forEach(tab => tab.classList.remove('active'));
+    
+    if (clientId === 'all') {
+        document.querySelector('.admin-section .nav-tabs > .nav-tab').classList.add('active');
+    } else {
+        const clients = store.getClients();
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+            const tabs = document.querySelectorAll('#clientTicketTabs .nav-tab');
+            tabs.forEach(tab => {
+                if (tab.textContent === client.name) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+    }
+    
+    loadTicketList();
+}
+
+function deleteTicket(ticketNumber) {
+    if (confirm('Are you sure you want to delete this ticket?')) {
+        const data = store.getData();
+        data.tickets = data.tickets.filter(t => t.number !== ticketNumber);
+        store.saveData(data);
+        loadTicketList();
+        showToast('Success', 'Ticket deleted successfully');
+    }
+}
+
+function showImportTicketsModal() {
+    document.getElementById('importTicketsModal').classList.add('active');
+}
+
+function closeImportTicketsModal() {
+    document.getElementById('importTicketsModal').classList.remove('active');
+    document.getElementById('ticketFile').value = '';
+    document.getElementById('ticketPreview').innerHTML = 'Upload a CSV file to see preview...';
+    document.getElementById('importTicketsBtn').disabled = true;
+}
+
+let parsedTickets = [];
+
+document.getElementById('ticketFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const csv = event.target.result;
+        parseTicketCSV(csv);
+    };
+    reader.readAsText(file);
+});
+
+function parseTicketCSV(csv) {
+    const lines = csv.split('\n').filter(line => line.trim());
+    parsedTickets = [];
+    
+    let preview = '<strong>Preview of tickets to import:</strong><br><br>';
+    let validCount = 0;
+    
+    lines.forEach((line, index) => {
+        // Skip header row if it exists
+        if (index === 0 && (line.toLowerCase().includes('ticket') || line.toLowerCase().includes('number'))) {
+            return;
+        }
+        
+        const parts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+        
+        if (parts[0]) {
+            const ticketNumber = parts[0];
+            const description = parts[1] || '';
+            const clientName = parts[2] || '';
+            
+            // Find client ID if client name provided
+            let clientId = null;
+            if (clientName) {
+                const clients = store.getClients();
+                const client = clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
+                if (client) {
+                    clientId = client.id;
+                }
+            }
+            
+            parsedTickets.push({
+                number: ticketNumber,
+                description: description,
+                clientId: clientId,
+                lastUsed: new Date().toISOString()
+            });
+            
+            validCount++;
+            preview += `${validCount}. <strong>${ticketNumber}</strong> - ${description || 'No description'}${clientName ? ' (' + clientName + ')' : ''}<br>`;
+        }
+    });
+    
+    if (validCount === 0) {
+        preview = '<span style="color: var(--danger-color);">No valid tickets found in CSV file.</span>';
+        document.getElementById('importTicketsBtn').disabled = true;
+    } else {
+        preview += `<br><strong>Total: ${validCount} tickets ready to import</strong>`;
+        document.getElementById('importTicketsBtn').disabled = false;
+    }
+    
+    document.getElementById('ticketPreview').innerHTML = preview;
+}
+
+function processTicketImport() {
+    if (parsedTickets.length === 0) {
+        showToast('Error', 'No tickets to import', 'danger');
+        return;
+    }
+    
+    const data = store.getData();
+    let addedCount = 0;
+    let updatedCount = 0;
+    
+    parsedTickets.forEach(newTicket => {
+        const existingIndex = data.tickets.findIndex(t => t.number === newTicket.number);
+        if (existingIndex >= 0) {
+            // Update existing ticket
+            data.tickets[existingIndex] = { ...data.tickets[existingIndex], ...newTicket };
+            updatedCount++;
+        } else {
+            // Add new ticket
+            data.tickets.push(newTicket);
+            addedCount++;
+        }
+    });
+    
+    store.saveData(data);
+    closeImportTicketsModal();
+    loadTicketList();
+    
+    showToast('Success', `Imported ${addedCount} new tickets, updated ${updatedCount} existing tickets`);
+}
+
+function downloadTicketTemplate() {
+    const csv = 'Ticket Number,Description,Client Name\nPROJ-001,Example ticket description,Acme Corp\nPROJ-002,Another example,TechStart Inc';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ticket_import_template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showToast('Success', 'Template downloaded');
+}
+
+// ==================== EMAIL GENERATION ====================
+
+function generateDayEmail(dateStr) {
+    let entries = store.getEntries({ startDate: dateStr, endDate: dateStr });
+    
+    // Filter by current view
+    const userSelect = document.getElementById('timesheetUserSelect');
+    const filterValue = userSelect ? userSelect.value : null;
+    
+    if (filterValue && filterValue !== 'all') {
+        entries = entries.filter(e => e.userId === parseInt(filterValue));
+    } else if (currentUser.role === 'user') {
+        entries = entries.filter(e => e.userId === currentUser.id);
+    } else if (currentUser.role === 'manager' && (!filterValue || filterValue === 'all')) {
+        const teamIds = currentUser.team || [];
+        entries = entries.filter(e => e.userId === currentUser.id || teamIds.includes(e.userId));
+    }
+    
+    if (entries.length === 0) {
+        showToast('No Entries', 'No time entries for this day', 'warning');
+        return;
+    }
+    
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    const users = store.getUsers();
+    
+    // Sort entries by start time
+    entries.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    
+    // Format date nicely
+    const date = new Date(dateStr + 'T00:00:00');
+    const dateFormatted = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Build HTML email
+    let html = `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #cbd5e1; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+        .time { font-weight: 600; color: #64748b; }
+        .client { font-weight: 600; color: #2563eb; }
+        .ticket { color: #10b981; font-family: monospace; }
+        .total { margin-top: 20px; padding: 15px; background: #f1f5f9; border-left: 4px solid #2563eb; font-size: 16px; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Time Entry Summary - ${dateFormatted}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Client</th>
+                    <th>Activity</th>
+                    <th>Ticket</th>
+                    <th>Description</th>
+                    <th>Hours</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    let totalHours = 0;
+    const clientHours = {}; // Track hours per client
+    
+    entries.forEach(entry => {
+        const client = clients.find(c => c.id === entry.clientId);
+        const activity = activities.find(a => a.id === entry.activityId);
+        const user = users.find(u => u.id === entry.userId);
+        
+        if (!client || !activity) return;
+        
+        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [endHour, endMin] = entry.endTime.split(':').map(Number);
+        const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+        totalHours += hours;
+        
+        // Track hours per client
+        if (!clientHours[client.name]) {
+            clientHours[client.name] = 0;
+        }
+        clientHours[client.name] += hours;
+        
+        const showUser = filterValue === 'all' && currentUser.role !== 'user';
+        
+        html += `
+                <tr>
+                    <td class="time">${entry.startTime} - ${entry.endTime}</td>
+                    <td class="client">${client.name}${showUser && user ? '<br><small>' + user.fullName + '</small>' : ''}</td>
+                    <td>${activity.name}</td>
+                    <td class="ticket">${entry.ticket || '-'}</td>
+                    <td>${entry.description}</td>
+                    <td>${hours.toFixed(2)}h</td>
+                </tr>`;
+    });
+    
+    html += `
+            </tbody>
+        </table>`;
+    
+    // Add client summary section
+    const clientNames = Object.keys(clientHours).sort();
+    if (clientNames.length > 1) {
+        html += `
+        <div style="margin-top: 30px;">
+            <h2 style="color: #2563eb; font-size: 18px; margin-bottom: 15px;">Summary by Client</h2>
+            <table style="width: auto; min-width: 400px;">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th style="text-align: right;">Hours</th>
+                        <th style="text-align: right;">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        
+        clientNames.forEach(clientName => {
+            const hours = clientHours[clientName];
+            const percentage = (hours / totalHours * 100).toFixed(1);
+            html += `
+                    <tr>
+                        <td class="client">${clientName}</td>
+                        <td style="text-align: right;">${hours.toFixed(2)}h</td>
+                        <td style="text-align: right;">${percentage}%</td>
+                    </tr>`;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        </div>`;
+    }
+    
+    // Add total
+    html += `
+        <div class="total">
+            Total Hours: ${totalHours.toFixed(2)} hours
+        </div>
+    </div>
+</body>
+</html>`;
+    
+    // Copy to clipboard and show preview
+    copyToClipboard(html);
+    
+    // Open preview in new window
+    const preview = window.open('', 'Email Preview', 'width=900,height=700');
+    preview.document.write(html);
+    preview.document.close();
+    
+    showToast('Success', 'Email HTML copied to clipboard and preview opened!');
+}
+
+function copyToClipboard(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+}
+
+// ==================== ADMIN REPORTS ====================
+
+let currentAdminReportData = null;
+let currentAdminReportType = null;
+
+function generateAdminReport(reportType) {
+    currentAdminReportType = reportType;
+    const entries = store.getEntries({});
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    const users = store.getUsers();
+    
+    let reportHtml = '';
+    let reportTitle = '';
+    let reportData = [];
+    
+    switch(reportType) {
+        case 'user-activity':
+            reportTitle = 'User Activity Report';
+            const userStats = {};
+            
+            users.forEach(user => {
+                userStats[user.id] = {
+                    name: user.fullName,
+                    role: user.role,
+                    totalHours: 0,
+                    totalEntries: 0,
+                    clients: {}
+                };
+            });
+            
+            entries.forEach(entry => {
+                const [startHour, startMin] = entry.startTime.split(':').map(Number);
+                const [endHour, endMin] = entry.endTime.split(':').map(Number);
+                const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+                
+                if (userStats[entry.userId]) {
+                    userStats[entry.userId].totalHours += hours;
+                    userStats[entry.userId].totalEntries++;
+                    
+                    const client = clients.find(c => c.id === entry.clientId);
+                    if (client) {
+                        if (!userStats[entry.userId].clients[client.name]) {
+                            userStats[entry.userId].clients[client.name] = 0;
+                        }
+                        userStats[entry.userId].clients[client.name] += hours;
+                    }
+                }
+            });
+            
+            reportHtml = '<table style="width: 100%;"><thead><tr><th>User</th><th>Role</th><th>Total Hours</th><th>Entries</th><th>Top Client</th></tr></thead><tbody>';
+            
+            Object.values(userStats).forEach(stat => {
+                const topClient = Object.entries(stat.clients).sort((a, b) => b[1] - a[1])[0];
+                reportData.push({
+                    User: stat.name,
+                    Role: stat.role,
+                    'Total Hours': stat.totalHours.toFixed(2),
+                    Entries: stat.totalEntries,
+                    'Top Client': topClient ? `${topClient[0]} (${topClient[1].toFixed(2)}h)` : 'N/A'
+                });
+                
+                reportHtml += `<tr>
+                    <td style="padding: 10px;"><strong>${stat.name}</strong></td>
+                    <td style="padding: 10px;">${stat.role}</td>
+                    <td style="padding: 10px;">${stat.totalHours.toFixed(2)}h</td>
+                    <td style="padding: 10px;">${stat.totalEntries}</td>
+                    <td style="padding: 10px;">${topClient ? topClient[0] + ' (' + topClient[1].toFixed(2) + 'h)' : 'N/A'}</td>
+                </tr>`;
+            });
+            
+            reportHtml += '</tbody></table>';
+            break;
+            
+        case 'client-summary':
+            reportTitle = 'Client Summary Report';
+            const clientStats = {};
+            
+            clients.forEach(client => {
+                clientStats[client.id] = {
+                    name: client.name,
+                    totalHours: 0,
+                    totalEntries: 0,
+                    users: new Set()
+                };
+            });
+            
+            entries.forEach(entry => {
+                const [startHour, startMin] = entry.startTime.split(':').map(Number);
+                const [endHour, endMin] = entry.endTime.split(':').map(Number);
+                const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+                
+                if (clientStats[entry.clientId]) {
+                    clientStats[entry.clientId].totalHours += hours;
+                    clientStats[entry.clientId].totalEntries++;
+                    clientStats[entry.clientId].users.add(entry.userId);
+                }
+            });
+            
+            reportHtml = '<table style="width: 100%;"><thead><tr><th>Client</th><th>Total Hours</th><th>Entries</th><th>Users</th><th>Avg Hours/Entry</th></tr></thead><tbody>';
+            
+            Object.values(clientStats).sort((a, b) => b.totalHours - a.totalHours).forEach(stat => {
+                reportData.push({
+                    Client: stat.name,
+                    'Total Hours': stat.totalHours.toFixed(2),
+                    Entries: stat.totalEntries,
+                    Users: stat.users.size,
+                    'Avg Hours/Entry': (stat.totalHours / stat.totalEntries).toFixed(2)
+                });
+                
+                reportHtml += `<tr>
+                    <td style="padding: 10px;"><strong>${stat.name}</strong></td>
+                    <td style="padding: 10px;">${stat.totalHours.toFixed(2)}h</td>
+                    <td style="padding: 10px;">${stat.totalEntries}</td>
+                    <td style="padding: 10px;">${stat.users.size}</td>
+                    <td style="padding: 10px;">${(stat.totalHours / stat.totalEntries).toFixed(2)}h</td>
+                </tr>`;
+            });
+            
+            reportHtml += '</tbody></table>';
+            break;
+            
+        case 'weekly-breakdown':
+            reportTitle = 'Weekly Breakdown Report';
+            const weekDates = getWeekDates(currentWeekStart);
+            
+            reportHtml = '<table style="width: 100%;"><thead><tr><th>Date</th><th>Day</th><th>Total Hours</th><th>Entries</th><th>Users Active</th></tr></thead><tbody>';
+            
+            weekDates.forEach(date => {
+                const dateStr = formatDateISO(date);
+                const dayEntries = entries.filter(e => e.date === dateStr);
+                const totalHours = dayEntries.reduce((sum, e) => {
+                    const [sh, sm] = e.startTime.split(':').map(Number);
+                    const [eh, em] = e.endTime.split(':').map(Number);
+                    return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+                }, 0);
+                const activeUsers = new Set(dayEntries.map(e => e.userId)).size;
+                
+                reportData.push({
+                    Date: dateStr,
+                    Day: formatDate(date),
+                    'Total Hours': totalHours.toFixed(2),
+                    Entries: dayEntries.length,
+                    'Users Active': activeUsers
+                });
+                
+                reportHtml += `<tr>
+                    <td style="padding: 10px;">${dateStr}</td>
+                    <td style="padding: 10px;"><strong>${formatDate(date)}</strong></td>
+                    <td style="padding: 10px;">${totalHours.toFixed(2)}h</td>
+                    <td style="padding: 10px;">${dayEntries.length}</td>
+                    <td style="padding: 10px;">${activeUsers}</td>
+                </tr>`;
+            });
+            
+            reportHtml += '</tbody></table>';
+            break;
+            
+        case 'activity-distribution':
+            reportTitle = 'Activity Distribution Report';
+            const activityStats = {};
+            
+            activities.forEach(activity => {
+                activityStats[activity.id] = {
+                    name: activity.name,
+                    totalHours: 0,
+                    totalEntries: 0
+                };
+            });
+            
+            entries.forEach(entry => {
+                const [startHour, startMin] = entry.startTime.split(':').map(Number);
+                const [endHour, endMin] = entry.endTime.split(':').map(Number);
+                const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+                
+                if (activityStats[entry.activityId]) {
+                    activityStats[entry.activityId].totalHours += hours;
+                    activityStats[entry.activityId].totalEntries++;
+                }
+            });
+            
+            const totalActivityHours = Object.values(activityStats).reduce((sum, s) => sum + s.totalHours, 0);
+            
+            reportHtml = '<table style="width: 100%;"><thead><tr><th>Activity</th><th>Total Hours</th><th>Entries</th><th>% of Total</th></tr></thead><tbody>';
+            
+            Object.values(activityStats).sort((a, b) => b.totalHours - a.totalHours).forEach(stat => {
+                const percentage = (stat.totalHours / totalActivityHours * 100).toFixed(1);
+                
+                reportData.push({
+                    Activity: stat.name,
+                    'Total Hours': stat.totalHours.toFixed(2),
+                    Entries: stat.totalEntries,
+                    '% of Total': percentage
+                });
+                
+                reportHtml += `<tr>
+                    <td style="padding: 10px;"><strong>${stat.name}</strong></td>
+                    <td style="padding: 10px;">${stat.totalHours.toFixed(2)}h</td>
+                    <td style="padding: 10px;">${stat.totalEntries}</td>
+                    <td style="padding: 10px;">${percentage}%</td>
+                </tr>`;
+            });
+            
+            reportHtml += '</tbody></table>';
+            break;
+            
+        case 'ticket-usage':
+            reportTitle = 'Ticket Usage Report';
+            const ticketStats = {};
+            
+            entries.forEach(entry => {
+                if (entry.ticket) {
+                    if (!ticketStats[entry.ticket]) {
+                        ticketStats[entry.ticket] = {
+                            number: entry.ticket,
+                            totalHours: 0,
+                            totalEntries: 0,
+                            users: new Set()
+                        };
+                    }
+                    
+                    const [startHour, startMin] = entry.startTime.split(':').map(Number);
+                    const [endHour, endMin] = entry.endTime.split(':').map(Number);
+                    const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+                    
+                    ticketStats[entry.ticket].totalHours += hours;
+                    ticketStats[entry.ticket].totalEntries++;
+                    ticketStats[entry.ticket].users.add(entry.userId);
+                }
+            });
+            
+            reportHtml = '<table style="width: 100%;"><thead><tr><th>Ticket #</th><th>Total Hours</th><th>Entries</th><th>Users</th></tr></thead><tbody>';
+            
+            Object.values(ticketStats).sort((a, b) => b.totalHours - a.totalHours).forEach(stat => {
+                reportData.push({
+                    'Ticket #': stat.number,
+                    'Total Hours': stat.totalHours.toFixed(2),
+                    Entries: stat.totalEntries,
+                    Users: stat.users.size
+                });
+                
+                reportHtml += `<tr>
+                    <td style="padding: 10px;"><strong>${stat.number}</strong></td>
+                    <td style="padding: 10px;">${stat.totalHours.toFixed(2)}h</td>
+                    <td style="padding: 10px;">${stat.totalEntries}</td>
+                    <td style="padding: 10px;">${stat.users.size}</td>
+                </tr>`;
+            });
+            
+            reportHtml += '</tbody></table>';
+            break;
+            
+        case 'full-export':
+            reportTitle = 'Complete Data Export';
+            
+            reportHtml = '<table style="width: 100%;"><thead><tr><th>Date</th><th>User</th><th>Client</th><th>Activity</th><th>Ticket</th><th>Start</th><th>End</th><th>Hours</th><th>Description</th></tr></thead><tbody>';
+            
+            entries.sort((a, b) => {
+                const dateCompare = a.date.localeCompare(b.date);
+                if (dateCompare !== 0) return dateCompare;
+                return a.startTime.localeCompare(b.startTime);
+            }).forEach(entry => {
+                const user = users.find(u => u.id === entry.userId);
+                const client = clients.find(c => c.id === entry.clientId);
+                const activity = activities.find(a => a.id === entry.activityId);
+                
+                const [startHour, startMin] = entry.startTime.split(':').map(Number);
+                const [endHour, endMin] = entry.endTime.split(':').map(Number);
+                const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+                
+                reportData.push({
+                    Date: entry.date,
+                    User: user ? user.fullName : 'Unknown',
+                    Client: client ? client.name : 'Unknown',
+                    Activity: activity ? activity.name : 'Unknown',
+                    Ticket: entry.ticket || '',
+                    Start: entry.startTime,
+                    End: entry.endTime,
+                    Hours: hours.toFixed(2),
+                    Description: entry.description
+                });
+                
+                reportHtml += `<tr>
+                    <td style="padding: 10px;">${entry.date}</td>
+                    <td style="padding: 10px;">${user ? user.fullName : 'Unknown'}</td>
+                    <td style="padding: 10px;">${client ? client.name : 'Unknown'}</td>
+                    <td style="padding: 10px;">${activity ? activity.name : 'Unknown'}</td>
+                    <td style="padding: 10px;">${entry.ticket || '-'}</td>
+                    <td style="padding: 10px;">${entry.startTime}</td>
+                    <td style="padding: 10px;">${entry.endTime}</td>
+                    <td style="padding: 10px;">${hours.toFixed(2)}h</td>
+                    <td style="padding: 10px;">${entry.description}</td>
+                </tr>`;
+            });
+            
+            reportHtml += '</tbody></table>';
+            break;
+    }
+    
+    currentAdminReportData = reportData;
+    
+    document.getElementById('adminReportTitle').textContent = reportTitle;
+    document.getElementById('adminReportContent').innerHTML = reportHtml;
+    document.getElementById('adminReportOutput').style.display = 'block';
+    
+    // Scroll to report
+    document.getElementById('adminReportOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+function exportAdminReport() {
+    if (!currentAdminReportData || currentAdminReportData.length === 0) {
+        showToast('Error', 'No report data to export', 'danger');
+        return;
+    }
+    
+    // Convert to CSV
+    const headers = Object.keys(currentAdminReportData[0]);
+    let csv = headers.join(',') + '\n';
+    
+    currentAdminReportData.forEach(row => {
+        const values = headers.map(header => {
+            const value = row[header] || '';
+            // Escape quotes and wrap in quotes if contains comma
+            return value.toString().includes(',') ? `"${value.replace(/"/g, '""')}"` : value;
+        });
+        csv += values.join(',') + '\n';
+    });
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentAdminReportType}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    showToast('Success', 'Report exported successfully');
+}
+
+function closeAdminReport() {
+    document.getElementById('adminReportOutput').style.display = 'none';
+    currentAdminReportData = null;
+    currentAdminReportType = null;
+}
+
+function generateCustomReport() {
+    const startDate = document.getElementById('customReportStartDate').value;
+    const endDate = document.getElementById('customReportEndDate').value;
+    
+    if (!startDate || !endDate) {
+        showToast('Error', 'Please select both start and end dates', 'danger');
+        return;
+    }
+    
+    if (startDate > endDate) {
+        showToast('Error', 'Start date must be before end date', 'danger');
+        return;
+    }
+    
+    currentAdminReportType = 'custom-range';
+    const entries = store.getEntries({ startDate, endDate });
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    const users = store.getUsers();
+    
+    let reportTitle = `Custom Report: ${startDate} to ${endDate}`;
+    let reportData = [];
+    
+    let reportHtml = '<table style="width: 100%;"><thead><tr><th>Date</th><th>User</th><th>Client</th><th>Activity</th><th>Ticket</th><th>Start</th><th>End</th><th>Hours</th><th>Description</th></tr></thead><tbody>';
+    
+    entries.sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.startTime.localeCompare(b.startTime);
+    }).forEach(entry => {
+        const user = users.find(u => u.id === entry.userId);
+        const client = clients.find(c => c.id === entry.clientId);
+        const activity = activities.find(a => a.id === entry.activityId);
+        
+        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [endHour, endMin] = entry.endTime.split(':').map(Number);
+        const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+        
+        reportData.push({
+            Date: entry.date,
+            User: user ? user.fullName : 'Unknown',
+            Client: client ? client.name : 'Unknown',
+            Activity: activity ? activity.name : 'Unknown',
+            Ticket: entry.ticket || '',
+            Start: entry.startTime,
+            End: entry.endTime,
+            Hours: hours.toFixed(2),
+            Description: entry.description
+        });
+        
+        reportHtml += `<tr>
+            <td style="padding: 10px;">${entry.date}</td>
+            <td style="padding: 10px;">${user ? user.fullName : 'Unknown'}</td>
+            <td style="padding: 10px;">${client ? client.name : 'Unknown'}</td>
+            <td style="padding: 10px;">${activity ? activity.name : 'Unknown'}</td>
+            <td style="padding: 10px;">${entry.ticket || '-'}</td>
+            <td style="padding: 10px;">${entry.startTime}</td>
+            <td style="padding: 10px;">${entry.endTime}</td>
+            <td style="padding: 10px;">${hours.toFixed(2)}h</td>
+            <td style="padding: 10px;">${entry.description}</td>
+        </tr>`;
+    });
+    
+    reportHtml += '</tbody></table>';
+    
+    currentAdminReportData = reportData;
+    
+    document.getElementById('adminReportTitle').textContent = reportTitle;
+    document.getElementById('adminReportContent').innerHTML = reportHtml;
+    document.getElementById('adminReportOutput').style.display = 'block';
+    
+    // Scroll to report
+    document.getElementById('adminReportOutput').scrollIntoView({ behavior: 'smooth' });
+    
+    showToast('Success', `Generated report with ${entries.length} entries`);
+}
+
+// ==================== OLD REPORTS (Removed - now using admin reports) ====================
+
+function initializeReportDates() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    document.getElementById('reportStartDate').value = formatDateISO(firstDay);
+    document.getElementById('reportEndDate').value = formatDateISO(lastDay);
+}
+
+function populateUserFilter() {
+    const userFilter = document.getElementById('userFilter');
+    userFilter.innerHTML = '<option value="">All Team Members</option>';
+    
+    const users = store.getUsers();
+    const teamIds = currentUser.team || [];
+    
+    teamIds.forEach(userId => {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            userFilter.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
+        }
+    });
+}
+
+function generateReport() {
+    const reportType = document.getElementById('reportType').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
+    
+    let entries = store.getEntries({ startDate, endDate });
+    
+    // Apply user filter for managers
+    if (currentUser.role === 'manager') {
+        const userFilter = document.getElementById('userFilter').value;
+        if (userFilter) {
+            entries = entries.filter(e => e.userId === parseInt(userFilter));
+        } else {
+            const teamIds = currentUser.team || [];
+            entries = entries.filter(e => e.userId === currentUser.id || teamIds.includes(e.userId));
+        }
+    } else if (currentUser.role === 'user') {
+        entries = entries.filter(e => e.userId === currentUser.id);
+    }
+    
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    const users = store.getUsers();
+    
+    let reportData = [];
+    let totalHours = 0;
+    
+    entries.forEach(entry => {
+        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [endHour, endMin] = entry.endTime.split(':').map(Number);
+        const hours = (endHour * 60 + endMin - startHour * 60 - startMin) / 60;
+        totalHours += hours;
+        
+        const client = clients.find(c => c.id === entry.clientId);
+        const activity = activities.find(a => a.id === entry.activityId);
+        const user = users.find(u => u.id === entry.userId);
+        
+        if (!client || !activity || !user) return;
+        
+        let key, name;
+        
+        switch(reportType) {
+            case 'client':
+                key = entry.clientId;
+                name = client.name;
+                break;
+            case 'user':
+                key = entry.userId;
+                name = user.fullName;
+                break;
+            case 'activity':
+                key = entry.activityId;
+                name = activity.name;
+                break;
+            case 'ticket':
+                key = entry.ticket || 'No Ticket';
+                name = entry.ticket || 'No Ticket';
+                break;
+        }
+        
+        const existing = reportData.find(r => r.key === key);
+        if (existing) {
+            existing.hours += hours;
+            existing.entries++;
+        } else {
+            reportData.push({ key, name, hours, entries: 1 });
+        }
+    });
+    
+    // Sort by hours descending
+    reportData.sort((a, b) => b.hours - a.hours);
+    
+    // Display summary
+    const summaryDiv = document.getElementById('reportSummary');
+    summaryDiv.innerHTML = `
+        <h3>Report Summary</h3>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-value">${totalHours.toFixed(2)}</div>
+                <div class="summary-label">Total Hours</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">${entries.length}</div>
+                <div class="summary-label">Total Entries</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">${reportData.length}</div>
+                <div class="summary-label">Unique ${reportType.charAt(0).toUpperCase() + reportType.slice(1)}s</div>
+            </div>
+        </div>
+    `;
+    summaryDiv.style.display = 'block';
+    
+    // Display table
+    const tableContainer = document.getElementById('reportTableContainer');
+    const table = document.getElementById('reportTable');
+    
+    let typeLabel = reportType.charAt(0).toUpperCase() + reportType.slice(1);
+    
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>${typeLabel}</th>
+                <th>Hours</th>
+                <th>Entries</th>
+                <th>% of Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${reportData.map(row => `
+                <tr>
+                    <td>${row.name}</td>
+                    <td>${row.hours.toFixed(2)}</td>
+                    <td>${row.entries}</td>
+                    <td>${((row.hours / totalHours) * 100).toFixed(1)}%</td>
+                </tr>
+            `).join('')}
+        </tbody>
+        <tfoot>
+            <tr style="font-weight: 600; background: var(--hover-bg);">
+                <td>Total</td>
+                <td>${totalHours.toFixed(2)}</td>
+                <td>${entries.length}</td>
+                <td>100%</td>
+            </tr>
+        </tfoot>
+    `;
+    
+    tableContainer.style.display = 'block';
+}
+
+function exportReport() {
+    const table = document.getElementById('reportTable');
+    if (!table.innerHTML) {
+        showToast('Error', 'Please generate a report first', 'danger');
+        return;
+    }
+    
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('th, td');
+        const rowData = Array.from(cols).map(col => `"${col.textContent.trim()}"`);
+        csv.push(rowData.join(','));
+    });
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `timesheet_report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    showToast('Success', 'Report exported successfully');
+}
+
+// ==================== SETTINGS ====================
+
+function loadSettings() {
+    const settings = store.getSettings();
+    document.getElementById('enableReminders').checked = settings.enableReminders !== false;
+    document.getElementById('reminderTime').value = settings.reminderTime || '17:00';
+    document.getElementById('enableNagMode').checked = settings.enableNagMode || false;
+    document.getElementById('nagInterval').value = settings.nagInterval || 15;
+}
+
+function saveSettings() {
+    const settings = {
+        enableReminders: document.getElementById('enableReminders').checked,
+        reminderTime: document.getElementById('reminderTime').value,
+        enableNagMode: document.getElementById('enableNagMode').checked,
+        nagInterval: parseInt(document.getElementById('nagInterval').value)
+    };
+    
+    store.saveSettings(settings);
+    
+    // Request notification permission if enabling reminders
+    if (settings.enableReminders && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    showToast('Success', 'Settings saved - browser notifications enabled');
+                    // Send a test notification
+                    new Notification('Time Tracker Pro-centia', {
+                        body: 'Notifications are now enabled! You\'ll receive reminders here.',
+                        icon: '/favicon.ico'
+                    });
+                } else if (permission === 'denied') {
+                    showToast('Warning', 'Settings saved - but you denied notification permission. Please enable it in your browser settings.', 'warning');
+                }
+            });
+        } else if (Notification.permission === 'granted') {
+            showToast('Success', 'Settings saved successfully');
+            // Send a test notification
+            new Notification('Time Tracker Pro-centia', {
+                body: 'Settings updated! Reminders will appear like this.',
+                icon: '/favicon.ico'
+            });
+        } else {
+            showToast('Warning', 'Settings saved - but notifications are blocked. Please enable them in your browser settings.', 'warning');
+        }
+    } else {
+        showToast('Success', 'Settings saved successfully');
+    }
+    
+    setupReminders();
+}
+
+function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (currentPassword !== currentUser.password) {
+        showToast('Error', 'Current password is incorrect', 'danger');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showToast('Error', 'New passwords do not match', 'danger');
+        return;
+    }
+    
+    if (newPassword.length < 4) {
+        showToast('Error', 'Password must be at least 4 characters', 'danger');
+        return;
+    }
+    
+    store.updateUser(currentUser.id, { password: newPassword });
+    currentUser.password = newPassword;
+    
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    
+    showToast('Success', 'Password changed successfully');
+}
+
+// ==================== REMINDERS ====================
+
+let reminderInterval = null;
+let lastNagTime = null;
+
+function setupReminders() {
+    if (reminderInterval) {
+        clearInterval(reminderInterval);
+    }
+    
+    // Request notification permission if not already granted
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+    
+    // Check every minute
+    reminderInterval = setInterval(() => {
+        checkReminders();
+    }, 60000);
+}
+
+function checkReminders() {
+    const settings = store.getSettings();
+    if (!settings.enableReminders) return;
+    
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const today = formatDateISO(now);
+    
+    // Get today's entries
+    const entries = store.getEntries({ 
+        userId: currentUser.id, 
+        startDate: today, 
+        endDate: today 
+    });
+    
+    // Calculate total hours for today
+    const totalHours = entries.reduce((sum, entry) => {
+        const [sh, sm] = entry.startTime.split(':').map(Number);
+        const [eh, em] = entry.endTime.split(':').map(Number);
+        return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+    }, 0);
+    
+    // Check if we should send a reminder
+    const shouldRemind = totalHours < 7.5;
+    
+    // Primary reminder at set time
+    if (currentTime === settings.reminderTime && shouldRemind) {
+        sendBrowserNotification('Timesheet Reminder', 'Don\'t forget to log your time for today!');
+        lastNagTime = now.getTime();
+        return;
+    }
+    
+    // Nag mode - repeat reminder after primary time
+    if (settings.enableNagMode && shouldRemind) {
+        const [reminderHour, reminderMin] = settings.reminderTime.split(':').map(Number);
+        const reminderTimeMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), reminderHour, reminderMin).getTime();
+        const nowMs = now.getTime();
+        
+        // Only nag if we're past the reminder time
+        if (nowMs > reminderTimeMs) {
+            const nagIntervalMs = (settings.nagInterval || 15) * 60 * 1000;
+            
+            if (!lastNagTime || (nowMs - lastNagTime) >= nagIntervalMs) {
+                sendBrowserNotification(
+                    'Timesheet Nag', 
+                    `You still have ${(7.5 - totalHours).toFixed(1)} hours to log for today!`,
+                    true // requireInteraction
+                );
+                lastNagTime = nowMs;
+            }
+        }
+    }
+}
+
+function sendBrowserNotification(title, message, requireInteraction = false) {
+    // Check if browser supports notifications
+    if (!('Notification' in window)) {
+        console.log('Browser does not support notifications');
+        showToast(title, message, 'warning', 10000);
+        return;
+    }
+    
+    // Check permission
+    if (Notification.permission === 'granted') {
+        try {
+            const notification = new Notification(title, {
+                body: message,
+                icon: '/favicon.ico',
+                requireInteraction: requireInteraction, // Nag mode notifications must be dismissed
+                tag: 'timesheet-reminder', // Replace previous notification
+                badge: '/favicon.ico'
+            });
+            
+            // Click handler to bring user to app
+            notification.onclick = function() {
+                window.focus();
+                this.close();
+            };
+            
+            console.log('Notification sent:', title);
+        } catch (error) {
+            console.error('Error creating notification:', error);
+            showToast(title, message, 'warning', 10000);
+        }
+    } else if (Notification.permission === 'default') {
+        // Ask for permission
+        console.log('Requesting notification permission...');
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log('Permission granted, sending notification');
+                sendBrowserNotification(title, message, requireInteraction);
+            } else {
+                console.log('Permission denied');
+                showToast('Permission Denied', 'Please enable notifications in your browser settings to receive reminders', 'warning', 5000);
+            }
+        });
+    } else {
+        // Permission denied - fall back to toast
+        console.log('Notifications blocked, using toast instead');
+        showToast(title, message, 'warning', 10000);
+    }
+}
+
+// ==================== TOAST NOTIFICATIONS ====================
+
+function showToast(title, message, type = 'success', duration = 3000) {
+    const toast = document.getElementById('toast');
+    const header = document.getElementById('toastHeader');
+    const body = document.getElementById('toastBody');
+    
+    header.textContent = title;
+    body.textContent = message;
+    
+    // Remove previous color classes
+    toast.style.borderLeftColor = type === 'danger' ? 'var(--danger-color)' : 
+                                   type === 'warning' ? 'var(--warning-color)' : 
+                                   'var(--secondary-color)';
+    
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
+}
+
+// ==================== INITIALIZATION ====================
+
+// Check for existing session
+window.addEventListener('load', () => {
+    const savedUser = sessionStorage.getItem('currentUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        showApp();
+    }
+});
+
+// Request notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+    </script>
+</body>
+</html>
