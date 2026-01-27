@@ -999,8 +999,9 @@
                             <thead style="position: sticky; top: 0; background: var(--card-bg);">
                                 <tr>
                                     <th style="text-align: left; padding: 8px;">Ticket #</th>
-                                    <th style="text-align: left; padding: 8px;">Description</th>
+                                    <th style="text-align: left; padding: 8px;">Title</th>
                                     <th style="text-align: left; padding: 8px;">Client</th>
+                                    <th style="text-align: center; padding: 8px;">Complete</th>
                                     <th style="text-align: right; padding: 8px;">Action</th>
                                 </tr>
                             </thead>
@@ -1022,6 +1023,7 @@
                         <small style="color: var(--text-secondary); font-size: 12px; display: block; margin-top: 4px;">
                             Browser notifications will appear even when this tab is inactive
                         </small>
+                        <div id="notificationStatus" style="margin-top: 8px; padding: 8px; border-radius: 4px; font-size: 12px;"></div>
                     </div>
                     <div class="form-group">
                         <label>Reminder Time</label>
@@ -1039,6 +1041,63 @@
                         <small style="color: var(--text-secondary); font-size: 12px;">Repeat reminder every X minutes after reminder time if day has less than 7.5 hours logged</small>
                     </div>
                     <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Email Export Configuration</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Select which fields to include in email exports</p>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportTime" checked>
+                            <label for="exportTime">Time (start - end)</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportClient" checked>
+                            <label for="exportClient">Client</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportActivity" checked>
+                            <label for="exportActivity">Activity</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportTicket" checked>
+                            <label for="exportTicket">Ticket Number</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportTitle" checked>
+                            <label for="exportTitle">Title (Task description)</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportDescription">
+                            <label for="exportDescription">Description (Specific details)</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportCompleted" checked>
+                            <label for="exportCompleted">Completed Status</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="exportHours" checked>
+                            <label for="exportHours">Hours</label>
+                        </div>
+                    </div>
+                    <small style="color: var(--text-secondary); font-size: 12px; display: block; margin-top: 8px;">
+                        Note: If Time is excluded, entries with matching Client/Title/Activity will be grouped and hours summed
+                    </small>
+                    <button class="btn btn-primary" onclick="saveSettings()" style="margin-top: 12px;">Save Settings</button>
                 </div>
 
                 <div class="settings-group">
@@ -1086,8 +1145,14 @@
                     <div class="autocomplete-list hidden" id="ticketAutocomplete"></div>
                 </div>
                 <div class="form-group">
-                    <label>Description *</label>
+                    <label>Title (Generic task description)</label>
+                    <input type="text" id="entryTitle" placeholder="e.g., Feature Implementation, Bug Fix, Client Meeting">
+                    <small style="color: var(--text-secondary); font-size: 12px;">Auto-filled from ticket, or enter for new tickets</small>
+                </div>
+                <div class="form-group">
+                    <label>Description (Specific details) *</label>
                     <textarea id="entryDescription" rows="3" required></textarea>
+                    <small style="color: var(--text-secondary); font-size: 12px;">What specifically did you work on?</small>
                 </div>
                 <div class="form-group">
                     <label>Duration (hours)</label>
@@ -1230,6 +1295,72 @@
         </div>
     </div>
 
+    <!-- Edit Ticket Modal -->
+    <div class="modal" id="editTicketModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Ticket</h2>
+                <button class="close-btn" onclick="closeEditTicketModal()">×</button>
+            </div>
+            <form id="editTicketForm">
+                <div class="form-group">
+                    <label>Ticket Number *</label>
+                    <input type="text" id="editTicketNumber" readonly style="background: var(--hover-bg); cursor: not-allowed;">
+                    <small style="color: var(--text-secondary); font-size: 12px;">Ticket number cannot be changed</small>
+                </div>
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="editTicketTitle" required placeholder="e.g., Feature Implementation, Bug Fix">
+                    <small style="color: var(--text-secondary); font-size: 12px;">Generic description that defines this task</small>
+                </div>
+                <div class="form-group">
+                    <label>Client</label>
+                    <select id="editTicketClient">
+                        <option value="">No Client</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="editTicketCompleted">
+                        <label for="editTicketCompleted">Mark as Completed</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditTicketModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Ticket Info Modal -->
+    <div class="modal" id="newTicketModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Ticket Detected</h2>
+                <button class="close-btn" onclick="closeNewTicketModal()">×</button>
+            </div>
+            <form id="newTicketForm">
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                    Ticket <strong id="newTicketNumber"></strong> doesn't exist for <strong id="newTicketClient"></strong>.
+                    Please provide a title for this new ticket.
+                </p>
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="newTicketTitle" required placeholder="e.g., Feature Implementation, Bug Fix, Client Meeting">
+                    <small style="color: var(--text-secondary); font-size: 12px;">
+                        <strong>Note:</strong> Title is a generic description that defines this task.<br>
+                        Examples: "Feature Implementation", "Bug Fix", "Client Meeting", "Code Review"
+                    </small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewTicketModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Ticket & Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <div class="toast-header" id="toastHeader"></div>
@@ -1334,14 +1465,25 @@ class DataStore {
                     }
                 ],
                 tickets: [
-                    { number: 'PROJ-101', description: 'Implement new feature for dashboard', clientId: 1, lastUsed: new Date().toISOString() },
-                    { number: 'PROJ-102', description: 'Client meeting - requirements gathering', clientId: 2, lastUsed: new Date().toISOString() },
-                    { number: 'PROJ-103', description: 'Code review and testing', clientId: 1, lastUsed: new Date().toISOString() },
-                    { number: 'PROJ-104', description: 'Project kickoff meeting', clientId: 2, lastUsed: new Date().toISOString() }
+                    { number: 'PROJ-101', title: 'Dashboard Feature Implementation', clientId: 1, completed: false, lastUsed: new Date().toISOString() },
+                    { number: 'PROJ-102', title: 'Requirements Gathering', clientId: 2, completed: false, lastUsed: new Date().toISOString() },
+                    { number: 'PROJ-103', title: 'Code Review and Testing', clientId: 1, completed: false, lastUsed: new Date().toISOString() },
+                    { number: 'PROJ-104', title: 'Project Kickoff Meeting', clientId: 2, completed: true, lastUsed: new Date().toISOString() }
                 ],
                 settings: {
                     enableReminders: true,
-                    reminderTime: '17:00'
+                    reminderTime: '17:00',
+                    enableNagMode: false,
+                    nagInterval: 15,
+                    emailExportFields: {
+                        time: true,
+                        client: true,
+                        activity: true,
+                        ticket: true,
+                        title: true,
+                        description: false,
+                        hours: true
+                    }
                 }
             };
             this.saveData(defaultData);
@@ -1408,12 +1550,14 @@ class DataStore {
         entry.createdAt = new Date().toISOString();
         data.entries.push(entry);
         
-        // Auto-add ticket if new
+        // Auto-add ticket if new (this is now handled in form submission)
+        // Tickets should be created with title, not description
         if (entry.ticket && !data.tickets.find(t => t.number === entry.ticket)) {
             data.tickets.push({
                 number: entry.ticket,
-                description: entry.description,
+                title: entry.title || 'Untitled Task',
                 clientId: entry.clientId,
+                completed: false,
                 lastUsed: new Date().toISOString()
             });
         }
@@ -2558,6 +2702,7 @@ function showEntryModal(date, startTime, endTime, entryId = null) {
             document.getElementById('entryClient').value = entry.clientId;
             document.getElementById('entryActivity').value = entry.activityId;
             document.getElementById('entryTicket').value = entry.ticket || '';
+            document.getElementById('entryTitle').value = entry.title || '';
             document.getElementById('entryDescription').value = entry.description;
             document.getElementById('entryId').value = entry.id;
             document.getElementById('entryDate').value = entry.date;
@@ -2565,6 +2710,19 @@ function showEntryModal(date, startTime, endTime, entryId = null) {
             document.getElementById('entryEndTime').value = entry.endTime;
             document.getElementById('deleteEntryBtn').classList.remove('hidden');
             document.getElementById('copyEntryBtn').classList.remove('hidden');
+            
+            // Hide title field if ticket already exists
+            if (entry.ticket) {
+                const data = store.getData();
+                const existingTicket = data.tickets.find(t => t.number === entry.ticket);
+                if (existingTicket) {
+                    document.getElementById('entryTitle').parentElement.style.display = 'none';
+                } else {
+                    document.getElementById('entryTitle').parentElement.style.display = 'block';
+                }
+            } else {
+                document.getElementById('entryTitle').parentElement.style.display = 'block';
+            }
         }
     } else {
         document.getElementById('modalTitle').textContent = 'Add Time Entry';
@@ -2575,6 +2733,9 @@ function showEntryModal(date, startTime, endTime, entryId = null) {
         document.getElementById('entryId').value = '';
         document.getElementById('deleteEntryBtn').classList.add('hidden');
         document.getElementById('copyEntryBtn').classList.add('hidden');
+        
+        // Show title field for new entries
+        document.getElementById('entryTitle').parentElement.style.display = 'block';
     }
     
     // Update favorite star
@@ -2626,16 +2787,17 @@ function toggleEntryFavorite() {
     const data = store.getData();
     let ticket = data.tickets.find(t => t.number === ticketNumber);
     
-    // Get current entry data for client
+    // Get current entry data
     const clientId = parseInt(document.getElementById('entryClient').value);
-    const description = document.getElementById('entryDescription').value;
+    const title = document.getElementById('entryTitle').value;
     
     if (!ticket) {
         // Create new ticket entry
         ticket = {
             number: ticketNumber,
-            description: description,
+            title: title || 'Untitled Task',
             clientId: clientId,
+            completed: false,
             favorite: true,
             lastUsed: new Date().toISOString()
         };
@@ -2712,6 +2874,8 @@ function copyEntry() {
 }
 
 // Handle entry form submission
+let pendingEntryData = null;
+
 document.getElementById('entryForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -2720,6 +2884,9 @@ document.getElementById('entryForm').addEventListener('submit', (e) => {
     const startTime = document.getElementById('entryStartTime').value;
     let endTime = document.getElementById('entryEndTime').value;
     const duration = parseFloat(document.getElementById('entryDuration').value);
+    const ticketNumber = document.getElementById('entryTicket').value.trim();
+    let title = document.getElementById('entryTitle').value.trim();
+    const clientId = parseInt(document.getElementById('entryClient').value);
     
     // If duration is specified, calculate end time
     if (duration && duration > 0) {
@@ -2730,14 +2897,92 @@ document.getElementById('entryForm').addEventListener('submit', (e) => {
         endTime = `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
     }
     
+    // Check if this is a new ticket for this client
+    if (ticketNumber && clientId) {
+        const data = store.getData();
+        const existingTicket = data.tickets.find(t => t.number === ticketNumber && t.clientId === clientId);
+        
+        if (!existingTicket) {
+            // Check if ticket exists for another client
+            const ticketForOtherClient = data.tickets.find(t => t.number === ticketNumber);
+            
+            if (ticketForOtherClient) {
+                // Ticket exists for different client - still need new title for this client
+                const clients = store.getClients();
+                const client = clients.find(c => c.id === clientId);
+                
+                // Store pending entry data
+                pendingEntryData = {
+                    userId: currentUser.id,
+                    date,
+                    startTime,
+                    endTime,
+                    clientId,
+                    activityId: parseInt(document.getElementById('entryActivity').value),
+                    ticket: ticketNumber,
+                    description: document.getElementById('entryDescription').value.trim(),
+                    entryId
+                };
+                
+                // Show modal
+                document.getElementById('newTicketNumber').textContent = ticketNumber;
+                document.getElementById('newTicketClient').textContent = client ? client.name : 'Unknown Client';
+                document.getElementById('newTicketTitle').value = '';
+                document.getElementById('newTicketModal').classList.add('active');
+                return;
+            } else {
+                // Brand new ticket - need title
+                if (!title) {
+                    const clients = store.getClients();
+                    const client = clients.find(c => c.id === clientId);
+                    
+                    // Store pending entry data
+                    pendingEntryData = {
+                        userId: currentUser.id,
+                        date,
+                        startTime,
+                        endTime,
+                        clientId,
+                        activityId: parseInt(document.getElementById('entryActivity').value),
+                        ticket: ticketNumber,
+                        description: document.getElementById('entryDescription').value.trim(),
+                        entryId
+                    };
+                    
+                    // Show modal
+                    document.getElementById('newTicketNumber').textContent = ticketNumber;
+                    document.getElementById('newTicketClient').textContent = client ? client.name : 'Unknown Client';
+                    document.getElementById('newTicketTitle').value = '';
+                    document.getElementById('newTicketModal').classList.add('active');
+                    return;
+                }
+                
+                // Has title - add ticket
+                data.tickets.push({
+                    number: ticketNumber,
+                    title: title,
+                    clientId: clientId,
+                    completed: false,
+                    lastUsed: new Date().toISOString()
+                });
+                store.saveData(data);
+                showToast('Success', `New ticket "${ticketNumber}" added to system`);
+            }
+        } else {
+            // Existing ticket - use its title
+            title = existingTicket.title;
+        }
+    }
+    
     const entryData = {
         userId: currentUser.id,
         date,
         startTime,
         endTime,
-        clientId: parseInt(document.getElementById('entryClient').value),
+        clientId,
         activityId: parseInt(document.getElementById('entryActivity').value),
-        ticket: document.getElementById('entryTicket').value.trim(),
+        ticket: ticketNumber,
+        title: title,
         description: document.getElementById('entryDescription').value.trim()
     };
     
@@ -2764,21 +3009,33 @@ document.getElementById('entryTicket').addEventListener('input', (e) => {
     }
     
     const tickets = store.getTickets(search);
+    const clients = store.getClients();
     
     if (tickets.length === 0) {
         autocompleteDiv.classList.add('hidden');
+        // Show title field for new ticket
+        document.getElementById('entryTitle').parentElement.style.display = 'block';
         return;
     }
     
     autocompleteDiv.innerHTML = '';
     tickets.slice(0, 5).forEach(ticket => {
+        const client = clients.find(c => c.id === ticket.clientId);
+        const clientName = client ? client.name : 'No Client';
+        
         const item = document.createElement('div');
         item.className = 'autocomplete-item';
-        item.textContent = `${ticket.number} - ${ticket.description}`;
+        item.innerHTML = `<strong>${clientName}</strong> (${ticket.number} - ${ticket.title || 'No title'})`;
         item.addEventListener('click', () => {
             document.getElementById('entryTicket').value = ticket.number;
-            document.getElementById('entryDescription').value = ticket.description;
+            document.getElementById('entryTitle').value = ticket.title || '';
+            document.getElementById('entryClient').value = ticket.clientId || '';
+            
+            // Hide title field when using existing ticket
+            document.getElementById('entryTitle').parentElement.style.display = 'none';
+            
             autocompleteDiv.classList.add('hidden');
+            updateFavoriteStar();
         });
         autocompleteDiv.appendChild(item);
     });
@@ -3102,20 +3359,37 @@ function loadTicketList() {
     filteredTickets.forEach(ticket => {
         const client = clients.find(c => c.id === ticket.clientId);
         const isFavorite = ticket.favorite || false;
+        const isCompleted = ticket.completed || false;
         const row = document.createElement('tr');
+        row.style.opacity = isCompleted ? '0.6' : '1';
         row.innerHTML = `
             <td style="padding: 8px;">
                 <strong>${ticket.number}</strong>
                 <span class="favorite-star" onclick="toggleFavoriteTicket('${ticket.number}')" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">${isFavorite ? '★' : '☆'}</span>
             </td>
-            <td style="padding: 8px;">${ticket.description || 'No description'}</td>
+            <td style="padding: 8px;">${ticket.title || 'No title'}</td>
             <td style="padding: 8px;">${client ? client.name : 'N/A'}</td>
+            <td style="padding: 8px; text-align: center;">
+                <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleTicketComplete('${ticket.number}')" style="cursor: pointer;">
+            </td>
             <td style="padding: 8px; text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="editTicket('${ticket.number}')" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;">Edit</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteTicket('${ticket.number}')" style="padding: 4px 8px; font-size: 12px;">Delete</button>
             </td>
         `;
         list.appendChild(row);
     });
+}
+
+function toggleTicketComplete(ticketNumber) {
+    const data = store.getData();
+    const ticket = data.tickets.find(t => t.number === ticketNumber);
+    if (ticket) {
+        ticket.completed = !ticket.completed;
+        store.saveData(data);
+        loadTicketList();
+        showToast('Success', ticket.completed ? 'Ticket marked as complete' : 'Ticket marked as incomplete');
+    }
 }
 
 function toggleFavoriteTicket(ticketNumber) {
@@ -3208,6 +3482,128 @@ function switchTicketTab(clientId) {
     loadTicketList();
 }
 
+function editTicket(ticketNumber) {
+    const data = store.getData();
+    const ticket = data.tickets.find(t => t.number === ticketNumber);
+    
+    if (!ticket) {
+        showToast('Error', 'Ticket not found', 'danger');
+        return;
+    }
+    
+    // Populate edit form
+    document.getElementById('editTicketNumber').value = ticket.number;
+    document.getElementById('editTicketTitle').value = ticket.title || '';
+    document.getElementById('editTicketClient').value = ticket.clientId || '';
+    document.getElementById('editTicketCompleted').checked = ticket.completed || false;
+    
+    // Populate client dropdown
+    const clients = store.getClients();
+    const clientSelect = document.getElementById('editTicketClient');
+    clientSelect.innerHTML = '<option value="">No Client</option>';
+    clients.forEach(client => {
+        clientSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+    });
+    document.getElementById('editTicketClient').value = ticket.clientId || '';
+    
+    // Show modal
+    document.getElementById('editTicketModal').classList.add('active');
+}
+
+function closeEditTicketModal() {
+    document.getElementById('editTicketModal').classList.remove('active');
+    document.getElementById('editTicketForm').reset();
+}
+
+function closeNewTicketModal() {
+    document.getElementById('newTicketModal').classList.remove('active');
+    document.getElementById('newTicketForm').reset();
+    pendingEntryData = null;
+}
+
+// Handle new ticket form submission
+document.getElementById('newTicketForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const title = document.getElementById('newTicketTitle').value.trim();
+    
+    if (!title) {
+        showToast('Error', 'Title is required', 'danger');
+        return;
+    }
+    
+    if (!pendingEntryData) {
+        showToast('Error', 'No pending entry data', 'danger');
+        closeNewTicketModal();
+        return;
+    }
+    
+    // Create the new ticket
+    const data = store.getData();
+    data.tickets.push({
+        number: pendingEntryData.ticket,
+        title: title,
+        clientId: pendingEntryData.clientId,
+        completed: false,
+        lastUsed: new Date().toISOString()
+    });
+    store.saveData(data);
+    
+    // Add title to pending entry data
+    pendingEntryData.title = title;
+    
+    // Save the entry
+    if (pendingEntryData.entryId) {
+        store.updateEntry(parseInt(pendingEntryData.entryId), pendingEntryData);
+        showToast('Success', 'Ticket created and entry updated successfully');
+    } else {
+        store.addEntry(pendingEntryData);
+        showToast('Success', 'Ticket created and entry added successfully');
+    }
+    
+    // Clean up
+    closeNewTicketModal();
+    closeEntryModal();
+    renderTimesheet();
+    
+    // Refresh admin list if visible
+    if (currentUser.role === 'admin') {
+        loadTicketList();
+    }
+});
+
+// Handle edit ticket form submission
+document.getElementById('editTicketForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const ticketNumber = document.getElementById('editTicketNumber').value;
+    const title = document.getElementById('editTicketTitle').value.trim();
+    const clientId = document.getElementById('editTicketClient').value;
+    const completed = document.getElementById('editTicketCompleted').checked;
+    
+    if (!title) {
+        showToast('Error', 'Title is required', 'danger');
+        return;
+    }
+    
+    const data = store.getData();
+    const ticket = data.tickets.find(t => t.number === ticketNumber);
+    
+    if (ticket) {
+        ticket.title = title;
+        ticket.clientId = clientId ? parseInt(clientId) : null;
+        ticket.completed = completed;
+        ticket.lastUsed = new Date().toISOString();
+        
+        store.saveData(data);
+        loadTicketList();
+        closeEditTicketModal();
+        showToast('Success', 'Ticket updated successfully');
+    } else {
+        showToast('Error', 'Ticket not found', 'danger');
+    }
+});
+
 function deleteTicket(ticketNumber) {
     if (confirm('Are you sure you want to delete this ticket?')) {
         const data = store.getData();
@@ -3260,7 +3656,7 @@ function parseTicketCSV(csv) {
         
         if (parts[0]) {
             const ticketNumber = parts[0];
-            const description = parts[1] || '';
+            const title = parts[1] || '';
             const clientName = parts[2] || '';
             
             // Find client ID if client name provided
@@ -3275,13 +3671,14 @@ function parseTicketCSV(csv) {
             
             parsedTickets.push({
                 number: ticketNumber,
-                description: description,
+                title: title,
                 clientId: clientId,
+                completed: false,
                 lastUsed: new Date().toISOString()
             });
             
             validCount++;
-            preview += `${validCount}. <strong>${ticketNumber}</strong> - ${description || 'No description'}${clientName ? ' (' + clientName + ')' : ''}<br>`;
+            preview += `${validCount}. <strong>${ticketNumber}</strong> - ${title || 'No title'}${clientName ? ' (' + clientName + ')' : ''}<br>`;
         }
     });
     
@@ -3327,7 +3724,7 @@ function processTicketImport() {
 }
 
 function downloadTicketTemplate() {
-    const csv = 'Ticket Number,Description,Client Name\nPROJ-001,Example ticket description,Acme Corp\nPROJ-002,Another example,TechStart Inc';
+    const csv = 'Ticket Number,Title,Client Name\nPROJ-001,Dashboard Feature Implementation,Acme Corp\nPROJ-002,Requirements Gathering,TechStart Inc';
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -3364,6 +3761,12 @@ function generateDayEmail(dateStr) {
     const clients = store.getClients();
     const activities = store.getActivities();
     const users = store.getUsers();
+    const tickets = store.getTickets();
+    const settings = store.getSettings();
+    const exportFields = settings.emailExportFields || {
+        time: true, client: true, activity: true, ticket: true, 
+        title: true, description: false, completed: true, hours: true
+    };
     
     // Sort entries by start time
     entries.sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -3372,21 +3775,45 @@ function generateDayEmail(dateStr) {
     const date = new Date(dateStr + 'T00:00:00');
     const dateFormatted = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
+    // Group entries if time is excluded
+    let displayEntries = entries;
+    if (!exportFields.time) {
+        const grouped = {};
+        entries.forEach(entry => {
+            const client = clients.find(c => c.id === entry.clientId);
+            const activity = activities.find(a => a.id === entry.activityId);
+            const key = `${client?.name || 'Unknown'}_${entry.ticket || 'NO_TICKET'}_${entry.title || 'NO_TITLE'}_${activity?.name || 'Unknown'}`;
+            
+            if (!grouped[key]) {
+                grouped[key] = { ...entry, hours: 0 };
+            }
+            
+            const [startHour, startMin] = entry.startTime.split(':').map(Number);
+            const [endHour, endMin] = entry.endTime.split(':').map(Number);
+            const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+            grouped[key].hours += hours;
+        });
+        displayEntries = Object.values(grouped);
+    }
+    
     // Build HTML email
     let html = `<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .container { max-width: 900px; margin: 20px auto; padding: 20px; }
         h1 { color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #cbd5e1; }
-        td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
-        tr:hover { background: #f8fafc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; border: 1px solid #cbd5e1; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; font-weight: 600; border: 1px solid #cbd5e1; }
+        td { padding: 10px; border: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f8fafc; }
         .time { font-weight: 600; color: #64748b; }
         .client { font-weight: 600; color: #2563eb; }
         .ticket { color: #10b981; font-family: monospace; }
+        .completed { color: #10b981; font-weight: 600; }
+        .incomplete { color: #f59e0b; font-weight: 600; }
         .total { margin-top: 20px; padding: 15px; background: #f1f5f9; border-left: 4px solid #2563eb; font-size: 16px; font-weight: 600; }
     </style>
 </head>
@@ -3395,30 +3822,42 @@ function generateDayEmail(dateStr) {
         <h1>Time Entry Summary - ${dateFormatted}</h1>
         <table>
             <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Client</th>
-                    <th>Activity</th>
-                    <th>Ticket</th>
-                    <th>Description</th>
-                    <th>Hours</th>
-                </tr>
+                <tr>`;
+    
+    // Build header based on export settings
+    if (exportFields.time) html += `<th>Time</th>`;
+    if (exportFields.client) html += `<th>Client</th>`;
+    if (exportFields.activity) html += `<th>Activity</th>`;
+    if (exportFields.ticket) html += `<th>Ticket</th>`;
+    if (exportFields.title) html += `<th>Title</th>`;
+    if (exportFields.description) html += `<th>Description</th>`;
+    if (exportFields.completed) html += `<th>Status</th>`;
+    if (exportFields.hours) html += `<th>Hours</th>`;
+    
+    html += `</tr>
             </thead>
             <tbody>`;
     
     let totalHours = 0;
-    const clientHours = {}; // Track hours per client
+    const clientHours = {};
     
-    entries.forEach(entry => {
+    displayEntries.forEach(entry => {
         const client = clients.find(c => c.id === entry.clientId);
         const activity = activities.find(a => a.id === entry.activityId);
         const user = users.find(u => u.id === entry.userId);
+        const ticket = tickets.find(t => t.number === entry.ticket);
         
         if (!client || !activity) return;
         
-        const [startHour, startMin] = entry.startTime.split(':').map(Number);
-        const [endHour, endMin] = entry.endTime.split(':').map(Number);
-        const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+        let hours;
+        if (entry.hours !== undefined) {
+            // Already grouped
+            hours = entry.hours;
+        } else {
+            const [startHour, startMin] = entry.startTime.split(':').map(Number);
+            const [endHour, endMin] = entry.endTime.split(':').map(Number);
+            hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+        }
         totalHours += hours;
         
         // Track hours per client
@@ -3428,20 +3867,21 @@ function generateDayEmail(dateStr) {
         clientHours[client.name] += hours;
         
         const showUser = filterValue === 'all' && currentUser.role !== 'user';
+        const isCompleted = ticket ? (ticket.completed || false) : false;
         
-        html += `
-                <tr>
-                    <td class="time">${entry.startTime} - ${entry.endTime}</td>
-                    <td class="client">${client.name}${showUser && user ? '<br><small>' + user.fullName + '</small>' : ''}</td>
-                    <td>${activity.name}</td>
-                    <td class="ticket">${entry.ticket || '-'}</td>
-                    <td>${entry.description}</td>
-                    <td>${hours.toFixed(2)}h</td>
-                </tr>`;
+        html += `<tr>`;
+        if (exportFields.time) html += `<td class="time">${entry.startTime} - ${entry.endTime}</td>`;
+        if (exportFields.client) html += `<td class="client">${client.name}${showUser && user ? '<br><small>' + user.fullName + '</small>' : ''}</td>`;
+        if (exportFields.activity) html += `<td>${activity.name}</td>`;
+        if (exportFields.ticket) html += `<td class="ticket">${entry.ticket || '-'}</td>`;
+        if (exportFields.title) html += `<td>${entry.title || '-'}</td>`;
+        if (exportFields.description) html += `<td>${entry.description || '-'}</td>`;
+        if (exportFields.completed) html += `<td class="${isCompleted ? 'completed' : 'incomplete'}"><input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleEmailCompleted(this, '${entry.ticket}')" style="cursor: pointer; margin-right: 4px;">${isCompleted ? '✓ Complete' : '○ In Progress'}</td>`;
+        if (exportFields.hours) html += `<td>${hours.toFixed(2)}h</td>`;
+        html += `</tr>`;
     });
     
-    html += `
-            </tbody>
+    html += `</tbody>
         </table>`;
     
     // Add client summary section
@@ -3450,7 +3890,7 @@ function generateDayEmail(dateStr) {
         html += `
         <div style="margin-top: 30px;">
             <h2 style="color: #2563eb; font-size: 18px; margin-bottom: 15px;">Summary by Client</h2>
-            <table style="width: auto; min-width: 400px;">
+            <table style="width: auto; min-width: 400px; border: 1px solid #cbd5e1;">
                 <thead>
                     <tr>
                         <th>Client</th>
@@ -3482,19 +3922,105 @@ function generateDayEmail(dateStr) {
         <div class="total">
             Total Hours: ${totalHours.toFixed(2)} hours
         </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: white; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <button onclick="copyEmailAndClose()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; margin-right: 10px;">📋 Copy to Clipboard</button>
+            <button onclick="sendViaEmail()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">✉️ Open in Email</button>
+            <p style="margin-top: 10px; font-size: 13px; color: #64748b;">Click checkboxes above to mark tasks complete before copying/sending</p>
+        </div>
+        
+        <script>
+            function toggleEmailCompleted(checkbox, ticketNumber) {
+                // Update the visual state
+                const row = checkbox.closest('tr');
+                const cell = checkbox.closest('td');
+                if (checkbox.checked) {
+                    cell.className = 'completed';
+                    cell.innerHTML = '<input type="checkbox" checked onchange="toggleEmailCompleted(this, \\'' + ticketNumber + '\\')" style="cursor: pointer; margin-right: 4px;">✓ Complete';
+                } else {
+                    cell.className = 'incomplete';
+                    cell.innerHTML = '<input type="checkbox" onchange="toggleEmailCompleted(this, \\'' + ticketNumber + '\\')" style="cursor: pointer; margin-right: 4px;">○ In Progress';
+                }
+                
+                // Update in main app if window.opener exists
+                if (window.opener && !window.opener.closed) {
+                    try {
+                        window.opener.updateTicketCompletedStatus(ticketNumber, checkbox.checked);
+                    } catch (e) {
+                        console.log('Could not update main window:', e);
+                    }
+                }
+            }
+            
+            function copyEmailAndClose() {
+                // Select all content except the buttons
+                const range = document.createRange();
+                const container = document.querySelector('.container');
+                
+                // Hide buttons temporarily
+                const buttonDiv = container.querySelector('div[style*="margin-top: 20px"]');
+                buttonDiv.style.display = 'none';
+                
+                // Select and copy
+                range.selectNodeContents(container);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                try {
+                    document.execCommand('copy');
+                    alert('Email content copied to clipboard!\\n\\nYou can now paste it into your email client.');
+                    selection.removeAllRanges();
+                } catch (e) {
+                    alert('Failed to copy. Please select the content manually (Ctrl+A) and copy (Ctrl+C).');
+                }
+                
+                // Show buttons again
+                buttonDiv.style.display = 'block';
+            }
+            
+            function sendViaEmail() {
+                // Get the HTML content without buttons
+                const container = document.querySelector('.container');
+                const buttonDiv = container.querySelector('div[style*="margin-top: 20px"]');
+                buttonDiv.style.display = 'none';
+                
+                const emailBody = encodeURIComponent(container.innerHTML);
+                
+                buttonDiv.style.display = 'block';
+                
+                // Create mailto link
+                const subject = encodeURIComponent('Time Entry Summary - ${dateFormatted}');
+                const mailtoLink = 'mailto:?subject=' + subject + '&body=' + emailBody;
+                
+                // Open in email client
+                window.location.href = mailtoLink;
+            }
+        <\/script>
     </div>
 </body>
 </html>`;
     
-    // Copy to clipboard and show preview
-    copyToClipboard(html);
-    
-    // Open preview in new window
+    // Open preview window first
     const preview = window.open('', 'Email Preview', 'width=900,height=700');
-    preview.document.write(html);
-    preview.document.close();
+    if (preview) {
+        preview.document.write(html);
+        preview.document.close();
+    }
     
-    showToast('Success', 'Email HTML copied to clipboard and preview opened!');
+    showToast('Success', 'Email preview opened! Check/uncheck tasks as needed, then click Copy or Send.', 'success', 5000);
+}
+
+// Function called from email preview to update ticket completed status
+function updateTicketCompletedStatus(ticketNumber, completed) {
+    const data = store.getData();
+    const ticket = data.tickets.find(t => t.number === ticketNumber);
+    if (ticket) {
+        ticket.completed = completed;
+        store.saveData(data);
+        loadTicketList(); // Refresh admin list if visible
+        showToast('Success', `Ticket ${ticketNumber} marked as ${completed ? 'complete' : 'incomplete'}`);
+    }
 }
 
 function copyToClipboard(text) {
@@ -4124,6 +4650,67 @@ function loadSettings() {
     document.getElementById('reminderTime').value = settings.reminderTime || '17:00';
     document.getElementById('enableNagMode').checked = settings.enableNagMode || false;
     document.getElementById('nagInterval').value = settings.nagInterval || 15;
+    
+    // Load email export fields
+    const exportFields = settings.emailExportFields || {
+        time: true,
+        client: true,
+        activity: true,
+        ticket: true,
+        title: true,
+        description: false,
+        completed: true,
+        hours: true
+    };
+    
+    document.getElementById('exportTime').checked = exportFields.time;
+    document.getElementById('exportClient').checked = exportFields.client;
+    document.getElementById('exportActivity').checked = exportFields.activity;
+    document.getElementById('exportTicket').checked = exportFields.ticket;
+    document.getElementById('exportTitle').checked = exportFields.title;
+    document.getElementById('exportDescription').checked = exportFields.description;
+    document.getElementById('exportCompleted').checked = exportFields.completed;
+    document.getElementById('exportHours').checked = exportFields.hours;
+    
+    // Show notification permission status
+    updateNotificationStatus();
+}
+
+function updateNotificationStatus() {
+    const statusDiv = document.getElementById('notificationStatus');
+    if (!statusDiv) return;
+    
+    // Check if running from file:// protocol
+    if (window.location.protocol === 'file:') {
+        statusDiv.innerHTML = '⚠️ <strong>Notifications Not Available</strong><br><small>Browser notifications require the app to be hosted on a web server (http:// or https://). Running from local file (file://) does not support notifications.<br><br>To enable notifications:<br>• Host on a local web server (e.g., python -m http.server)<br>• Deploy to a web hosting service<br>• Use a browser extension like "Web Server for Chrome"</small>';
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+        statusDiv.style.padding = '12px';
+        return;
+    }
+    
+    if (!('Notification' in window)) {
+        statusDiv.innerHTML = '⚠️ <strong>Browser Does Not Support Notifications</strong><br><small>Your browser does not support the Notifications API. Try using Chrome, Firefox, or Edge.</small>';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+        return;
+    }
+    
+    const permission = Notification.permission;
+    
+    if (permission === 'granted') {
+        statusDiv.innerHTML = '✅ <strong>Notifications Enabled</strong> - You will receive reminders';
+        statusDiv.style.background = '#d1fae5';
+        statusDiv.style.color = '#065f46';
+    } else if (permission === 'denied') {
+        statusDiv.innerHTML = '❌ <strong>Notifications Blocked</strong> - Please enable in browser settings<br><small><strong>Chrome:</strong> Settings → Privacy → Site Settings → Notifications → Allow<br><strong>Firefox:</strong> Settings → Privacy → Permissions → Notifications → Settings → Allow<br><strong>Edge:</strong> Settings → Cookies and site permissions → Notifications → Allow</small>';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+    } else {
+        statusDiv.innerHTML = '⚠️ <strong>Notifications Not Set</strong> - Click "Save Settings" below to enable<br><small>You will be prompted to allow notifications when you save.</small>';
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.color = '#92400e';
+    }
 }
 
 function saveSettings() {
@@ -4131,41 +4718,73 @@ function saveSettings() {
         enableReminders: document.getElementById('enableReminders').checked,
         reminderTime: document.getElementById('reminderTime').value,
         enableNagMode: document.getElementById('enableNagMode').checked,
-        nagInterval: parseInt(document.getElementById('nagInterval').value)
+        nagInterval: parseInt(document.getElementById('nagInterval').value),
+        emailExportFields: {
+            time: document.getElementById('exportTime').checked,
+            client: document.getElementById('exportClient').checked,
+            activity: document.getElementById('exportActivity').checked,
+            ticket: document.getElementById('exportTicket').checked,
+            title: document.getElementById('exportTitle').checked,
+            description: document.getElementById('exportDescription').checked,
+            completed: document.getElementById('exportCompleted').checked,
+            hours: document.getElementById('exportHours').checked
+        }
     };
     
     store.saveSettings(settings);
     
-    // Request notification permission if enabling reminders
+    // Check if running from file:// protocol
+    if (window.location.protocol === 'file:') {
+        showToast('Settings Saved', 'Settings saved successfully. Note: Browser notifications require hosting on a web server and will not work from local file://', 'warning', 7000);
+        updateNotificationStatus();
+        setupReminders();
+        return;
+    }
+    
+    // Handle notification permissions
     if (settings.enableReminders && 'Notification' in window) {
         if (Notification.permission === 'default') {
+            // Only ask if we haven't asked before
             Notification.requestPermission().then(permission => {
+                updateNotificationStatus();
                 if (permission === 'granted') {
                     showToast('Success', 'Settings saved - browser notifications enabled');
-                    // Send a test notification
-                    new Notification('Time Tracker Pro-centia', {
-                        body: 'Notifications are now enabled! You\'ll receive reminders here.',
-                        icon: '/favicon.ico'
-                    });
+                    // Send a single test notification
+                    try {
+                        new Notification('Time Tracker Pro-centia', {
+                            body: 'Notifications are now enabled! You\'ll receive reminders here.',
+                            icon: '/favicon.ico',
+                            tag: 'settings-test'
+                        });
+                    } catch (e) {
+                        console.error('Error sending test notification:', e);
+                    }
                 } else if (permission === 'denied') {
-                    showToast('Warning', 'Settings saved - but you denied notification permission. Please enable it in your browser settings.', 'warning');
+                    showToast('Warning', 'Settings saved - but you denied notification permission. To enable notifications, please allow them in your browser settings.', 'warning', 7000);
                 }
+                setupReminders();
+            }).catch(err => {
+                console.error('Error requesting notification permission:', err);
+                showToast('Error', 'Failed to request notification permission. Check console for details.', 'danger');
+                updateNotificationStatus();
+                setupReminders();
             });
         } else if (Notification.permission === 'granted') {
+            // Already granted - just save
             showToast('Success', 'Settings saved successfully');
-            // Send a test notification
-            new Notification('Time Tracker Pro-centia', {
-                body: 'Settings updated! Reminders will appear like this.',
-                icon: '/favicon.ico'
-            });
+            updateNotificationStatus();
+            setupReminders();
         } else {
-            showToast('Warning', 'Settings saved - but notifications are blocked. Please enable them in your browser settings.', 'warning');
+            // Permission denied previously
+            showToast('Warning', 'Settings saved - but notifications are blocked. To enable notifications, please allow them in your browser settings.', 'warning', 7000);
+            updateNotificationStatus();
+            setupReminders();
         }
     } else {
         showToast('Success', 'Settings saved successfully');
+        updateNotificationStatus();
+        setupReminders();
     }
-    
-    setupReminders();
 }
 
 function changePassword() {
@@ -4281,18 +4900,17 @@ function sendBrowserNotification(title, message, requireInteraction = false) {
         return;
     }
     
-    // Check permission
+    // Only send if permission already granted - NEVER ask during reminders
     if (Notification.permission === 'granted') {
         try {
             const notification = new Notification(title, {
                 body: message,
                 icon: '/favicon.ico',
-                requireInteraction: requireInteraction, // Nag mode notifications must be dismissed
-                tag: 'timesheet-reminder', // Replace previous notification
+                requireInteraction: requireInteraction,
+                tag: 'timesheet-reminder',
                 badge: '/favicon.ico'
             });
             
-            // Click handler to bring user to app
             notification.onclick = function() {
                 window.focus();
                 this.close();
@@ -4303,22 +4921,12 @@ function sendBrowserNotification(title, message, requireInteraction = false) {
             console.error('Error creating notification:', error);
             showToast(title, message, 'warning', 10000);
         }
-    } else if (Notification.permission === 'default') {
-        // Ask for permission
-        console.log('Requesting notification permission...');
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                console.log('Permission granted, sending notification');
-                sendBrowserNotification(title, message, requireInteraction);
-            } else {
-                console.log('Permission denied');
-                showToast('Permission Denied', 'Please enable notifications in your browser settings to receive reminders', 'warning', 5000);
-            }
-        });
+    } else if (Notification.permission === 'denied') {
+        console.log('Notifications blocked by user');
+        // Silent fail - don't annoy user with toasts for every reminder
     } else {
-        // Permission denied - fall back to toast
-        console.log('Notifications blocked, using toast instead');
-        showToast(title, message, 'warning', 10000);
+        console.log('Notification permission not granted - user needs to enable in Settings');
+        // Silent fail - permission should only be requested in Settings
     }
 }
 
