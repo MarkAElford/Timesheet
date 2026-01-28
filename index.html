@@ -1101,6 +1101,21 @@
                 </div>
 
                 <div class="settings-group">
+                    <h3>Timesheet Display Settings</h3>
+                    <div class="form-group">
+                        <label>Start Time (Default View)</label>
+                        <input type="time" id="timesheetStartTime" value="08:00">
+                        <small style="color: var(--text-secondary); font-size: 12px;">Default start time for timesheet display</small>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time (Default View)</label>
+                        <input type="time" id="timesheetEndTime" value="18:00">
+                        <small style="color: var(--text-secondary); font-size: 12px;">Default end time for timesheet display</small>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+
+                <div class="settings-group">
                     <h3>Change Password</h3>
                     <div class="form-group">
                         <label>Current Password</label>
@@ -1200,6 +1215,13 @@
                         <option value="manager">Manager</option>
                         <option value="admin">Admin</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Assign Manager</label>
+                    <select id="newUserManager">
+                        <option value="">No Manager</option>
+                    </select>
+                    <small style="color: var(--text-secondary); font-size: 12px;">Optional: Assign this user to a manager</small>
                 </div>
                 <div class="form-group">
                     <label>Password *</label>
@@ -1361,6 +1383,35 @@
         </div>
     </div>
 
+    <!-- Assign Manager Modal -->
+    <div class="modal" id="assignManagerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Assign Manager</h2>
+                <button class="close-btn" onclick="closeAssignManagerModal()">×</button>
+            </div>
+            <form id="assignManagerForm">
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                    Assign a manager to <strong id="assignUserName"></strong>
+                </p>
+                <div class="form-group">
+                    <label>Select Manager</label>
+                    <select id="assignManagerSelect" required>
+                        <option value="">No Manager</option>
+                    </select>
+                    <small style="color: var(--text-secondary); font-size: 12px;">
+                        Managers can only view timesheets for users assigned to them
+                    </small>
+                </div>
+                <input type="hidden" id="assignUserId">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAssignManagerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Manager</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <div class="toast-header" id="toastHeader"></div>
@@ -1385,9 +1436,9 @@ class DataStore {
         if (!localStorage.getItem(this.storageKey)) {
             const defaultData = {
                 users: [
-                    { id: 1, username: 'admin', password: 'admin', fullName: 'Admin User', email: 'admin@company.com', role: 'admin' },
-                    { id: 2, username: 'manager', password: 'manager', fullName: 'Manager User', email: 'manager@company.com', role: 'manager', team: [3] },
-                    { id: 3, username: 'user', password: 'user', fullName: 'Regular User', email: 'user@company.com', role: 'user' }
+                    { id: 1, username: 'admin', password: 'admin', fullName: 'Admin User', email: 'admin@company.com', role: 'admin', managerId: null },
+                    { id: 2, username: 'manager', password: 'manager', fullName: 'Manager User', email: 'manager@company.com', role: 'manager', team: [3], managerId: null },
+                    { id: 3, username: 'user', password: 'user', fullName: 'Regular User', email: 'user@company.com', role: 'user', managerId: 2 }
                 ],
                 clients: [
                     { id: 1, name: 'Acme Corp', color: '#667eea' },
@@ -1475,6 +1526,8 @@ class DataStore {
                     reminderTime: '17:00',
                     enableNagMode: false,
                     nagInterval: 15,
+                    timesheetStartTime: '08:00',
+                    timesheetEndTime: '18:00',
                     emailExportFields: {
                         time: true,
                         client: true,
@@ -1780,14 +1833,13 @@ function setupTimesheetUserFilter() {
             select.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
         });
     } else if (currentUser.role === 'manager') {
-        // Manager sees self and team
+        // Manager sees self and users assigned to them
         select.innerHTML += `<option value="${currentUser.id}">${currentUser.fullName} (Me)</option>`;
-        const teamIds = currentUser.team || [];
-        teamIds.forEach(userId => {
-            const user = users.find(u => u.id === userId);
-            if (user) {
-                select.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
-            }
+        
+        // Find users where this manager is assigned
+        const teamMembers = users.filter(u => u.managerId === currentUser.id);
+        teamMembers.forEach(user => {
+            select.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
         });
     }
 }
@@ -1851,17 +1903,49 @@ function formatDateISO(date) {
     return date.toISOString().split('T')[0];
 }
 
+// State for time expansion
+let showEarlierTimes = false;
+let showLaterTimes = false;
+
 function renderTimesheet() {
     const grid = document.getElementById('timesheetGrid');
     grid.innerHTML = '';
     
     const weekDates = getWeekDates(currentWeekStart);
-    const timeSlots = [];
+    const settings = store.getSettings();
     
-    // Generate time slots (8am to 7pm, 15-minute intervals)
-    for (let hour = 8; hour <= 18; hour++) {
+    // Get time range from settings
+    const startTime = settings.timesheetStartTime || '08:00';
+    const endTime = settings.timesheetEndTime || '18:00';
+    
+    const [defaultStartHour, defaultStartMin] = startTime.split(':').map(Number);
+    const [defaultEndHour, defaultEndMin] = endTime.split(':').map(Number);
+    
+    // Determine actual time range based on expand state
+    let actualStartHour = defaultStartHour;
+    let actualStartMin = defaultStartMin;
+    let actualEndHour = defaultEndHour;
+    let actualEndMin = defaultEndMin;
+    
+    if (showEarlierTimes) {
+        actualStartHour = 0;
+        actualStartMin = 0;
+    }
+    
+    if (showLaterTimes) {
+        actualEndHour = 23;
+        actualEndMin = 45;
+    }
+    
+    // Generate time slots (15-minute intervals)
+    const timeSlots = [];
+    for (let hour = actualStartHour; hour <= actualEndHour; hour++) {
         for (let min = 0; min < 60; min += 15) {
-            if (hour === 18 && min > 0) break; // Stop at 7pm
+            // Skip if we're past the end time
+            if (hour === actualEndHour && min > actualEndMin) break;
+            // Skip if we're before the start time
+            if (hour === actualStartHour && min < actualStartMin) continue;
+            
             timeSlots.push({ hour, min });
         }
     }
@@ -1878,35 +1962,126 @@ function renderTimesheet() {
         grid.appendChild(createSummaryCell(date));
     });
     
+    // Show Earlier button row
+    if (actualStartHour > 0 || showEarlierTimes) {
+        const expandEarlierBtn = document.createElement('div');
+        expandEarlierBtn.className = 'time-label';
+        
+        if (showEarlierTimes) {
+            // Currently expanded - show collapse button
+            expandEarlierBtn.innerHTML = `
+                <button class="expand-time-btn" onclick="toggleEarlierTimes()" title="Hide earlier times" style="width: 100%; padding: 4px; font-size: 11px; cursor: pointer; background: var(--border-color);">
+                    ▲ Collapse
+                </button>
+            `;
+        } else {
+            // Currently collapsed - show expand button
+            expandEarlierBtn.innerHTML = `
+                <button class="expand-time-btn" onclick="toggleEarlierTimes()" title="Show times from 00:00" style="width: 100%; padding: 4px; font-size: 11px; cursor: pointer;">
+                    ▲ Earlier
+                </button>
+            `;
+        }
+        
+        grid.appendChild(expandEarlierBtn);
+        
+        weekDates.forEach(() => {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'time-slot';
+            emptyCell.style.background = 'var(--hover-bg)';
+            emptyCell.style.borderTop = '2px solid var(--border-color)';
+            grid.appendChild(emptyCell);
+        });
+    }
+    
     // Time rows
     timeSlots.forEach((slot, index) => {
         const timeStr = `${slot.hour.toString().padStart(2, '0')}:${slot.min.toString().padStart(2, '0')}`;
+        
+        // Highlight default time range
+        const isInDefaultRange = (
+            (slot.hour > defaultStartHour || (slot.hour === defaultStartHour && slot.min >= defaultStartMin)) &&
+            (slot.hour < defaultEndHour || (slot.hour === defaultEndHour && slot.min <= defaultEndMin))
+        );
         
         // Time label (only show on the hour)
         if (slot.min === 0) {
             const label = document.createElement('div');
             label.className = 'time-label';
             label.textContent = timeStr;
+            if (!isInDefaultRange) {
+                label.style.opacity = '0.5';
+                label.style.background = 'var(--hover-bg)';
+            }
             grid.appendChild(label);
         } else {
             const label = document.createElement('div');
             label.className = 'time-label';
             label.textContent = '';
+            if (!isInDefaultRange) {
+                label.style.background = 'var(--hover-bg)';
+            }
             grid.appendChild(label);
         }
         
         // Day slots
         weekDates.forEach(date => {
             const cell = createTimeSlot(date, timeStr, index);
+            if (!isInDefaultRange) {
+                cell.style.background = 'var(--hover-bg)';
+                cell.style.opacity = '0.7';
+            }
             grid.appendChild(cell);
         });
     });
+    
+    // Show Later button row
+    if (actualEndHour < 23 || showLaterTimes) {
+        const expandLaterBtn = document.createElement('div');
+        expandLaterBtn.className = 'time-label';
+        
+        if (showLaterTimes) {
+            // Currently expanded - show collapse button
+            expandLaterBtn.innerHTML = `
+                <button class="expand-time-btn" onclick="toggleLaterTimes()" title="Hide later times" style="width: 100%; padding: 4px; font-size: 11px; cursor: pointer; background: var(--border-color);">
+                    ▼ Collapse
+                </button>
+            `;
+        } else {
+            // Currently collapsed - show expand button
+            expandLaterBtn.innerHTML = `
+                <button class="expand-time-btn" onclick="toggleLaterTimes()" title="Show times until 23:59" style="width: 100%; padding: 4px; font-size: 11px; cursor: pointer;">
+                    ▼ Later
+                </button>
+            `;
+        }
+        
+        grid.appendChild(expandLaterBtn);
+        
+        weekDates.forEach(() => {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'time-slot';
+            emptyCell.style.background = 'var(--hover-bg)';
+            emptyCell.style.borderBottom = '2px solid var(--border-color)';
+            grid.appendChild(emptyCell);
+        });
+    }
     
     // Load and render entries
     renderEntries(weekDates);
     
     // Render favorite tickets panel
     renderFavoriteTickets();
+}
+
+function toggleEarlierTimes() {
+    showEarlierTimes = !showEarlierTimes;
+    renderTimesheet();
+}
+
+function toggleLaterTimes() {
+    showLaterTimes = !showLaterTimes;
+    renderTimesheet();
 }
 
 function createHeader(text) {
@@ -3008,7 +3183,17 @@ document.getElementById('entryTicket').addEventListener('input', (e) => {
         return;
     }
     
-    const tickets = store.getTickets(search);
+    // Get selected client
+    const selectedClientId = parseInt(document.getElementById('entryClient').value);
+    
+    // Get all tickets and filter by search and client
+    let tickets = store.getTickets(search);
+    
+    // Filter by selected client if one is selected
+    if (selectedClientId) {
+        tickets = tickets.filter(t => t.clientId === selectedClientId);
+    }
+    
     const clients = store.getClients();
     
     if (tickets.length === 0) {
@@ -3041,6 +3226,16 @@ document.getElementById('entryTicket').addEventListener('input', (e) => {
     });
     
     autocompleteDiv.classList.remove('hidden');
+});
+
+// Refresh ticket autocomplete when client changes
+document.getElementById('entryClient').addEventListener('change', (e) => {
+    // Clear ticket field when client changes
+    const ticketField = document.getElementById('entryTicket');
+    if (ticketField.value) {
+        // Trigger autocomplete refresh if ticket field has value
+        ticketField.dispatchEvent(new Event('input'));
+    }
 });
 
 // ==================== ZOOM CONTROLS ====================
@@ -3114,14 +3309,19 @@ function loadUserList() {
     list.innerHTML = '';
     
     users.forEach(user => {
+        const manager = user.managerId ? users.find(u => u.id === user.managerId) : null;
+        const managerName = manager ? manager.fullName : 'No Manager';
+        
         const item = document.createElement('li');
         item.className = 'list-item';
         item.innerHTML = `
             <div>
                 <strong>${user.fullName}</strong> (${user.username})
                 <br><small style="color: var(--text-secondary);">${user.email} - ${user.role}</small>
+                <br><small style="color: var(--text-secondary);">Manager: <strong>${managerName}</strong></small>
             </div>
             <div class="list-item-actions">
+                <button class="btn btn-secondary btn-sm" onclick="showAssignManagerModal(${user.id})" style="margin-right: 8px;">Assign Manager</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})" ${user.id === currentUser.id ? 'disabled' : ''}>Delete</button>
             </div>
         `;
@@ -3186,12 +3386,22 @@ function loadActivityList() {
 
 // User Management
 function showAddUserModal() {
-    const users = store.getUsers().filter(u => u.role === 'user');
+    const users = store.getUsers();
+    
+    // Populate manager dropdown
+    const managerSelect = document.getElementById('newUserManager');
+    managerSelect.innerHTML = '<option value="">No Manager</option>';
+    users.filter(u => u.role === 'admin' || u.role === 'manager').forEach(user => {
+        managerSelect.innerHTML += `<option value="${user.id}">${user.fullName} (${user.role})</option>`;
+    });
+    
+    // Populate team select (for when creating a manager)
     const teamSelect = document.getElementById('managerTeam');
     teamSelect.innerHTML = '';
-    users.forEach(user => {
+    users.filter(u => u.role === 'user').forEach(user => {
         teamSelect.innerHTML += `<option value="${user.id}">${user.fullName}</option>`;
     });
+    
     document.getElementById('addUserModal').classList.add('active');
 }
 
@@ -3208,12 +3418,15 @@ document.getElementById('newUserRole').addEventListener('change', (e) => {
 document.getElementById('addUserForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
+    const managerId = document.getElementById('newUserManager').value;
+    
     const userData = {
         username: document.getElementById('newUsername').value.trim(),
         fullName: document.getElementById('newUserFullName').value.trim(),
         email: document.getElementById('newUserEmail').value.trim(),
         role: document.getElementById('newUserRole').value,
-        password: document.getElementById('newUserPassword').value
+        password: document.getElementById('newUserPassword').value,
+        managerId: managerId ? parseInt(managerId) : null
     };
     
     if (userData.role === 'manager') {
@@ -3221,10 +3434,99 @@ document.getElementById('addUserForm').addEventListener('submit', (e) => {
         userData.team = Array.from(teamSelect.selectedOptions).map(opt => parseInt(opt.value));
     }
     
-    store.addUser(userData);
+    const newUser = store.addUser(userData);
+    
+    // Update manager's team array if manager was assigned
+    if (managerId) {
+        const data = store.getData();
+        const manager = data.users.find(u => u.id === parseInt(managerId));
+        if (manager && manager.role === 'manager') {
+            if (!manager.team) manager.team = [];
+            if (!manager.team.includes(newUser.id)) {
+                manager.team.push(newUser.id);
+            }
+            store.saveData(data);
+        }
+    }
+    
     closeAddUserModal();
     loadUserList();
     showToast('Success', 'User added successfully');
+});
+
+function showAssignManagerModal(userId) {
+    const users = store.getUsers();
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+        showToast('Error', 'User not found', 'danger');
+        return;
+    }
+    
+    // Populate form
+    document.getElementById('assignUserId').value = userId;
+    document.getElementById('assignUserName').textContent = user.fullName;
+    
+    // Populate manager dropdown (only admins and managers)
+    const managerSelect = document.getElementById('assignManagerSelect');
+    managerSelect.innerHTML = '<option value="">No Manager</option>';
+    
+    users.filter(u => u.role === 'admin' || u.role === 'manager').forEach(manager => {
+        if (manager.id !== userId) { // Can't assign user to themselves
+            const selected = user.managerId === manager.id ? 'selected' : '';
+            managerSelect.innerHTML += `<option value="${manager.id}" ${selected}>${manager.fullName} (${manager.role})</option>`;
+        }
+    });
+    
+    document.getElementById('assignManagerModal').classList.add('active');
+}
+
+function closeAssignManagerModal() {
+    document.getElementById('assignManagerModal').classList.remove('active');
+    document.getElementById('assignManagerForm').reset();
+}
+
+// Handle assign manager form submission
+document.getElementById('assignManagerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const userId = parseInt(document.getElementById('assignUserId').value);
+    const managerId = document.getElementById('assignManagerSelect').value;
+    
+    const data = store.getData();
+    const user = data.users.find(u => u.id === userId);
+    
+    if (user) {
+        user.managerId = managerId ? parseInt(managerId) : null;
+        store.saveData(data);
+        
+        // Update manager's team array
+        data.users.forEach(u => {
+            if (u.role === 'manager') {
+                // Remove userId from all manager teams first
+                if (u.team) {
+                    u.team = u.team.filter(id => id !== userId);
+                }
+                
+                // Add to new manager's team
+                if (u.id === parseInt(managerId)) {
+                    if (!u.team) u.team = [];
+                    if (!u.team.includes(userId)) {
+                        u.team.push(userId);
+                    }
+                }
+            }
+        });
+        
+        store.saveData(data);
+        loadUserList();
+        closeAssignManagerModal();
+        
+        const managerName = managerId ? data.users.find(u => u.id === parseInt(managerId)).fullName : 'No Manager';
+        showToast('Success', `Manager assigned: ${managerName}`);
+    } else {
+        showToast('Error', 'User not found', 'danger');
+    }
 });
 
 function deleteUser(userId) {
@@ -3869,12 +4171,15 @@ function generateDayEmail(dateStr) {
         const showUser = filterValue === 'all' && currentUser.role !== 'user';
         const isCompleted = ticket ? (ticket.completed || false) : false;
         
+        // Use description as fallback for title if title is empty
+        const displayTitle = entry.title || entry.description || '-';
+        
         html += `<tr>`;
         if (exportFields.time) html += `<td class="time">${entry.startTime} - ${entry.endTime}</td>`;
         if (exportFields.client) html += `<td class="client">${client.name}${showUser && user ? '<br><small>' + user.fullName + '</small>' : ''}</td>`;
         if (exportFields.activity) html += `<td>${activity.name}</td>`;
         if (exportFields.ticket) html += `<td class="ticket">${entry.ticket || '-'}</td>`;
-        if (exportFields.title) html += `<td>${entry.title || '-'}</td>`;
+        if (exportFields.title) html += `<td>${displayTitle}</td>`;
         if (exportFields.description) html += `<td>${entry.description || '-'}</td>`;
         if (exportFields.completed) html += `<td class="${isCompleted ? 'completed' : 'incomplete'}"><input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleEmailCompleted(this, '${entry.ticket}')" style="cursor: pointer; margin-right: 4px;">${isCompleted ? '✓ Complete' : '○ In Progress'}</td>`;
         if (exportFields.hours) html += `<td>${hours.toFixed(2)}h</td>`;
@@ -4650,6 +4955,8 @@ function loadSettings() {
     document.getElementById('reminderTime').value = settings.reminderTime || '17:00';
     document.getElementById('enableNagMode').checked = settings.enableNagMode || false;
     document.getElementById('nagInterval').value = settings.nagInterval || 15;
+    document.getElementById('timesheetStartTime').value = settings.timesheetStartTime || '08:00';
+    document.getElementById('timesheetEndTime').value = settings.timesheetEndTime || '18:00';
     
     // Load email export fields
     const exportFields = settings.emailExportFields || {
@@ -4699,9 +5006,22 @@ function updateNotificationStatus() {
     const permission = Notification.permission;
     
     if (permission === 'granted') {
-        statusDiv.innerHTML = '✅ <strong>Notifications Enabled</strong> - You will receive reminders';
-        statusDiv.style.background = '#d1fae5';
-        statusDiv.style.color = '#065f46';
+        // Test if notifications actually work
+        const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+        
+        if (!isSecure) {
+            statusDiv.innerHTML = '⚠️ <strong>HTTPS Required</strong><br><small>Browser notifications require HTTPS (or localhost). Your site is using HTTP which may block notifications in modern browsers.<br><br>For IIS: Enable SSL/TLS with a trusted certificate</small>';
+            statusDiv.style.background = '#fef3c7';
+            statusDiv.style.color = '#92400e';
+        } else if (window.location.protocol === 'https:' && !window.isSecureContext) {
+            statusDiv.innerHTML = '⚠️ <strong>Insecure Context Detected</strong><br><small>Even though using HTTPS, the browser considers this an insecure context (likely due to self-signed certificate or mixed content).<br><br>Solutions:<br>• Use a trusted SSL certificate (Let\'s Encrypt is free)<br>• For development: Use localhost instead<br>• Check browser console for security warnings</small>';
+            statusDiv.style.background = '#fef3c7';
+            statusDiv.style.color = '#92400e';
+        } else {
+            statusDiv.innerHTML = '✅ <strong>Notifications Enabled</strong> - You will receive reminders<br><small>If notifications still don\'t appear, check:<br>• Browser notification settings for this site<br>• Operating system notification settings<br>• Do Not Disturb / Focus mode is off</small>';
+            statusDiv.style.background = '#d1fae5';
+            statusDiv.style.color = '#065f46';
+        }
     } else if (permission === 'denied') {
         statusDiv.innerHTML = '❌ <strong>Notifications Blocked</strong> - Please enable in browser settings<br><small><strong>Chrome:</strong> Settings → Privacy → Site Settings → Notifications → Allow<br><strong>Firefox:</strong> Settings → Privacy → Permissions → Notifications → Settings → Allow<br><strong>Edge:</strong> Settings → Cookies and site permissions → Notifications → Allow</small>';
         statusDiv.style.background = '#fee2e2';
@@ -4719,6 +5039,8 @@ function saveSettings() {
         reminderTime: document.getElementById('reminderTime').value,
         enableNagMode: document.getElementById('enableNagMode').checked,
         nagInterval: parseInt(document.getElementById('nagInterval').value),
+        timesheetStartTime: document.getElementById('timesheetStartTime').value,
+        timesheetEndTime: document.getElementById('timesheetEndTime').value,
         emailExportFields: {
             time: document.getElementById('exportTime').checked,
             client: document.getElementById('exportClient').checked,
