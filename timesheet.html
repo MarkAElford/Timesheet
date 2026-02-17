@@ -170,7 +170,7 @@
 
         .main-content {
             padding: 24px;
-            max-width: 1400px;
+            max-width: 85%;
             margin: 0 auto;
         }
 
@@ -876,10 +876,10 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 16px;">
-                    <div class="timesheet-container" style="flex: 1;">
+                    <div class="timesheet-container" style="flex: 0 0 80%; max-width: 80%;">
                         <div class="timesheet-grid" id="timesheetGrid"></div>
                     </div>
-                    <div id="favoriteTicketsPanel" style="width: 250px; background: var(--card-bg); border-radius: 8px; padding: 16px; box-shadow: var(--shadow);">
+                    <div id="favoriteTicketsPanel" style="flex: 0 0 20%; max-width: 20%; background: var(--card-bg); border-radius: 8px; padding: 16px; box-shadow: var(--shadow); overflow-y: auto;">
                         <h3 style="font-size: 16px; margin-bottom: 12px;">Favorite Tickets</h3>
                         <div id="favoriteTicketsList"></div>
                     </div>
