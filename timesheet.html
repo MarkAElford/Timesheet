@@ -884,6 +884,22 @@
                         <div id="favoriteTicketsList"></div>
                     </div>
                 </div>
+                
+                <!-- Monthly Export Section -->
+                <div style="margin-top: 24px; background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: var(--shadow);">
+                    <h3 style="font-size: 18px; margin-bottom: 16px;">Monthly Time Export</h3>
+                    <div style="display: flex; gap: 12px; align-items: end;">
+                        <div style="flex: 1; max-width: 300px;">
+                            <label style="font-size: 14px; display: block; margin-bottom: 6px;">Select Month</label>
+                            <select id="monthlyExportMonth" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateMonthlyExport()">📥 Export Month to CSV</button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: 12px;">
+                        Export consolidated time entries with grouped tickets and descriptions
+                    </p>
+                </div>
             </div>
 
             <!-- Reports Tab -->
@@ -1816,6 +1832,7 @@ function showApp() {
     currentWeek();
     loadSettings();
     setupReminders();
+    populateMonthlyExportDropdown();
 }
 
 function setupTimesheetUserFilter() {
@@ -1862,6 +1879,7 @@ function switchTab(tabName) {
         initializeCustomReportDates();
     } else if (tabName === 'timesheet') {
         renderTimesheet();
+        populateMonthlyExportDropdown();
     }
 }
 
@@ -1879,6 +1897,31 @@ function initializeCustomReportDates() {
     if (customEndDate && !customEndDate.value) {
         customEndDate.value = formatDateISO(lastDay);
     }
+}
+
+function populateMonthlyExportDropdown() {
+    const select = document.getElementById('monthlyExportMonth');
+    if (!select) return;
+    
+    select.innerHTML = '';
+    
+    const today = new Date();
+    const months = [];
+    
+    // Generate last 12 months
+    for (let i = 0; i < 12; i++) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const value = `${year}-${(month + 1).toString().padStart(2, '0')}`;
+        
+        months.push({ value, label: monthName });
+    }
+    
+    months.forEach(m => {
+        select.innerHTML += `<option value="${m.value}">${m.label}</option>`;
+    });
 }
 
 // ==================== TIMESHEET GRID ====================
@@ -2883,6 +2926,13 @@ function showEntryModal(date, startTime, endTime, entryId = null) {
             document.getElementById('entryDate').value = entry.date;
             document.getElementById('entryStartTime').value = entry.startTime;
             document.getElementById('entryEndTime').value = entry.endTime;
+            
+            // Calculate and display duration
+            const [startHour, startMin] = entry.startTime.split(':').map(Number);
+            const [endHour, endMin] = entry.endTime.split(':').map(Number);
+            const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+            document.getElementById('entryDuration').value = hours.toFixed(2);
+            
             document.getElementById('deleteEntryBtn').classList.remove('hidden');
             document.getElementById('copyEntryBtn').classList.remove('hidden');
             
@@ -4684,6 +4734,126 @@ function closeAdminReport() {
     document.getElementById('adminReportOutput').style.display = 'none';
     currentAdminReportData = null;
     currentAdminReportType = null;
+}
+
+// ==================== MONTHLY EXPORT ====================
+
+function generateMonthlyExport() {
+    const monthSelect = document.getElementById('monthlyExportMonth');
+    if (!monthSelect || !monthSelect.value) {
+        showToast('Error', 'Please select a month', 'danger');
+        return;
+    }
+    
+    const [year, month] = monthSelect.value.split('-').map(Number);
+    const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    
+    // Get first and last day of month
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    
+    // Get all entries for the month for current user
+    let entries = store.getEntries({
+        startDate: formatDateISO(firstDay),
+        endDate: formatDateISO(lastDay)
+    });
+    
+    // Filter by user (only their own entries)
+    entries = entries.filter(e => e.userId === currentUser.id);
+    
+    if (entries.length === 0) {
+        showToast('No Data', `No time entries found for ${monthName}`, 'warning');
+        return;
+    }
+    
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    
+    // Group entries by Date + Client + Activity + Ticket
+    const grouped = {};
+    
+    entries.forEach(entry => {
+        const client = clients.find(c => c.id === entry.clientId);
+        const activity = activities.find(a => a.id === entry.activityId);
+        
+        if (!client || !activity) return;
+        
+        const ticket = entry.ticket || 'NO_TICKET';
+        const key = `${entry.date}_${client.name}_${activity.name}_${ticket}`;
+        
+        if (!grouped[key]) {
+            grouped[key] = {
+                date: entry.date,
+                client: client.name,
+                activity: activity.name,
+                ticket: entry.ticket || '',
+                descriptions: [],
+                totalMinutes: 0
+            };
+        }
+        
+        // Add description
+        const desc = entry.description || '';
+        if (desc && !grouped[key].descriptions.includes(desc)) {
+            grouped[key].descriptions.push(desc);
+        }
+        
+        // Add time
+        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [endHour, endMin] = entry.endTime.split(':').map(Number);
+        const minutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+        grouped[key].totalMinutes += minutes;
+    });
+    
+    // Convert to array and sort by date
+    const exportData = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
+    
+    // Build CSV
+    const headers = ['Date', 'Client', 'Activity', 'Time Entered', 'Description'];
+    let csv = headers.join(',') + '\n';
+    
+    exportData.forEach(row => {
+        const date = new Date(row.date + 'T00:00:00').toLocaleDateString('en-US');
+        const hours = (row.totalMinutes / 60).toFixed(2);
+        
+        // Build description: Ticket: desc1, desc2, desc3
+        let descriptionText = '';
+        if (row.ticket) {
+            descriptionText = `${row.ticket}: ${row.descriptions.join(', ')}`;
+        } else {
+            // For meetings/admin work
+            descriptionText = `${row.client}: ${row.activity}: ${row.descriptions.join(', ')}`;
+        }
+        
+        // Escape CSV values
+        const escapeCsv = (val) => {
+            if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+                return `"${val.replace(/"/g, '""')}"`;
+            }
+            return val;
+        };
+        
+        csv += [
+            escapeCsv(date),
+            escapeCsv(row.client),
+            escapeCsv(row.activity),
+            hours,
+            escapeCsv(descriptionText)
+        ].join(',') + '\n';
+    });
+    
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `timesheet_${currentUser.username}_${year}-${month.toString().padStart(2, '0')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showToast('Success', `Exported ${exportData.length} consolidated entries for ${monthName}`);
 }
 
 function generateCustomReport() {
