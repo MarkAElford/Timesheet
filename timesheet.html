@@ -887,18 +887,33 @@
                 
                 <!-- Monthly Export Section -->
                 <div style="margin-top: 24px; background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: var(--shadow);">
-                    <h3 style="font-size: 18px; margin-bottom: 16px;">Monthly Time Export</h3>
-                    <div style="display: flex; gap: 12px; align-items: end;">
-                        <div style="flex: 1; max-width: 300px;">
-                            <label style="font-size: 14px; display: block; margin-bottom: 6px;">Select Month</label>
-                            <select id="monthlyExportMonth" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
-                            </select>
+                    <h3 style="font-size: 18px; margin-bottom: 16px;">Monthly Time Export & Summary</h3>
+                    
+                    <div style="display: flex; gap: 24px;">
+                        <!-- Left side: Export Controls -->
+                        <div style="flex: 0 0 300px;">
+                            <div style="margin-bottom: 12px;">
+                                <label style="font-size: 14px; display: block; margin-bottom: 6px; font-weight: 600;">Select Month</label>
+                                <select id="monthlyExportMonth" onchange="updateMonthlyPivot()" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="generateMonthlyExport()" style="width: 100%; margin-bottom: 8px;">📥 Export Month to CSV</button>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                                Export consolidated time entries with grouped tickets and descriptions
+                            </p>
                         </div>
-                        <button class="btn btn-primary" onclick="generateMonthlyExport()">📥 Export Month to CSV</button>
+                        
+                        <!-- Right side: Pivot Table -->
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h4 style="font-size: 16px; font-weight: 600; margin: 0;">Hours by Activity & Client</h4>
+                                <button class="btn btn-secondary btn-sm" onclick="copyPivotToClipboard()" style="padding: 6px 12px;">📋 Copy Table</button>
+                            </div>
+                            <div id="monthlyPivotTable" style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px;">
+                                <p style="padding: 20px; text-align: center; color: var(--text-secondary);">Select a month to view summary</p>
+                            </div>
+                        </div>
                     </div>
-                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: 12px;">
-                        Export consolidated time entries with grouped tickets and descriptions
-                    </p>
                 </div>
             </div>
 
@@ -1833,6 +1848,7 @@ function showApp() {
     loadSettings();
     setupReminders();
     populateMonthlyExportDropdown();
+    updateMonthlyPivot();
 }
 
 function setupTimesheetUserFilter() {
@@ -1880,6 +1896,7 @@ function switchTab(tabName) {
     } else if (tabName === 'timesheet') {
         renderTimesheet();
         populateMonthlyExportDropdown();
+        updateMonthlyPivot();
     }
 }
 
@@ -4854,6 +4871,175 @@ function generateMonthlyExport() {
     window.URL.revokeObjectURL(url);
     
     showToast('Success', `Exported ${exportData.length} consolidated entries for ${monthName}`);
+}
+
+function updateMonthlyPivot() {
+    const monthSelect = document.getElementById('monthlyExportMonth');
+    if (!monthSelect || !monthSelect.value) {
+        return;
+    }
+    
+    const [year, month] = monthSelect.value.split('-').map(Number);
+    const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    
+    // Get first and last day of month
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    
+    // Get all entries for the month for current user
+    let entries = store.getEntries({
+        startDate: formatDateISO(firstDay),
+        endDate: formatDateISO(lastDay)
+    });
+    
+    // Filter by user (only their own entries)
+    entries = entries.filter(e => e.userId === currentUser.id);
+    
+    if (entries.length === 0) {
+        document.getElementById('monthlyPivotTable').innerHTML = 
+            `<p style="padding: 20px; text-align: center; color: var(--text-secondary);">No time entries for ${monthName}</p>`;
+        return;
+    }
+    
+    const clients = store.getClients();
+    const activities = store.getActivities();
+    
+    // Build pivot data: Activity -> Client -> Hours
+    const pivot = {};
+    const clientSet = new Set();
+    
+    entries.forEach(entry => {
+        const client = clients.find(c => c.id === entry.clientId);
+        const activity = activities.find(a => a.id === entry.activityId);
+        
+        if (!client || !activity) return;
+        
+        // Calculate hours
+        const [startHour, startMin] = entry.startTime.split(':').map(Number);
+        const [endHour, endMin] = entry.endTime.split(':').map(Number);
+        const hours = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+        
+        // Add to pivot
+        if (!pivot[activity.name]) {
+            pivot[activity.name] = {};
+        }
+        if (!pivot[activity.name][client.name]) {
+            pivot[activity.name][client.name] = 0;
+        }
+        pivot[activity.name][client.name] += hours;
+        
+        clientSet.add(client.name);
+    });
+    
+    // Convert to sorted arrays
+    const activityNames = Object.keys(pivot).sort();
+    const clientNames = Array.from(clientSet).sort();
+    
+    // Build HTML table
+    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+    
+    // Header row
+    html += '<thead><tr style="background: var(--hover-bg); border-bottom: 2px solid var(--border-color);">';
+    html += '<th style="padding: 10px; text-align: left; font-weight: 600; position: sticky; top: 0; background: var(--hover-bg);">Activity</th>';
+    clientNames.forEach(client => {
+        html += `<th style="padding: 10px; text-align: right; font-weight: 600; position: sticky; top: 0; background: var(--hover-bg);">${client}</th>`;
+    });
+    html += '<th style="padding: 10px; text-align: right; font-weight: 600; position: sticky; top: 0; background: var(--hover-bg); border-left: 2px solid var(--border-color);">Total</th>';
+    html += '</tr></thead>';
+    
+    // Data rows
+    html += '<tbody>';
+    let grandTotal = 0;
+    
+    activityNames.forEach((activity, idx) => {
+        const rowStyle = idx % 2 === 0 ? 'background: var(--card-bg);' : 'background: var(--hover-bg);';
+        html += `<tr style="${rowStyle}">`;
+        html += `<td style="padding: 10px; font-weight: 500; border-bottom: 1px solid var(--border-color);">${activity}</td>`;
+        
+        let rowTotal = 0;
+        clientNames.forEach(client => {
+            const hours = pivot[activity][client] || 0;
+            rowTotal += hours;
+            const displayHours = hours > 0 ? hours.toFixed(2) : '-';
+            html += `<td style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border-color);">${displayHours}</td>`;
+        });
+        
+        grandTotal += rowTotal;
+        html += `<td style="padding: 10px; text-align: right; font-weight: 600; border-bottom: 1px solid var(--border-color); border-left: 2px solid var(--border-color);">${rowTotal.toFixed(2)}</td>`;
+        html += '</tr>';
+    });
+    
+    // Total row
+    html += '<tr style="background: var(--hover-bg); font-weight: 600; border-top: 2px solid var(--border-color);">';
+    html += '<td style="padding: 10px;">Total</td>';
+    
+    clientNames.forEach(client => {
+        let clientTotal = 0;
+        activityNames.forEach(activity => {
+            clientTotal += pivot[activity][client] || 0;
+        });
+        html += `<td style="padding: 10px; text-align: right;">${clientTotal.toFixed(2)}</td>`;
+    });
+    
+    html += `<td style="padding: 10px; text-align: right; border-left: 2px solid var(--border-color);">${grandTotal.toFixed(2)}</td>`;
+    html += '</tr>';
+    
+    html += '</tbody></table>';
+    
+    document.getElementById('monthlyPivotTable').innerHTML = html;
+}
+
+function copyPivotToClipboard() {
+    const monthSelect = document.getElementById('monthlyExportMonth');
+    if (!monthSelect || !monthSelect.value) {
+        showToast('Error', 'Please select a month first', 'warning');
+        return;
+    }
+    
+    const [year, month] = monthSelect.value.split('-').map(Number);
+    const monthName = new Date(year, month - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    
+    // Get the table
+    const table = document.querySelector('#monthlyPivotTable table');
+    if (!table) {
+        showToast('Error', 'No pivot table to copy', 'warning');
+        return;
+    }
+    
+    // Build text version of the table
+    let text = `Hours by Activity & Client - ${monthName}\n\n`;
+    
+    // Get headers
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    text += headers.join('\t') + '\n';
+    text += headers.map(() => '---').join('\t') + '\n';
+    
+    // Get data rows
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+        text += cells.join('\t') + '\n';
+    });
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Success', 'Pivot table copied to clipboard!');
+    }).catch(err => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showToast('Success', 'Pivot table copied to clipboard!');
+        } catch (e) {
+            showToast('Error', 'Failed to copy to clipboard', 'danger');
+        }
+        document.body.removeChild(textarea);
+    });
 }
 
 function generateCustomReport() {
